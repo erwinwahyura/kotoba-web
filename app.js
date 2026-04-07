@@ -464,8 +464,11 @@ function setupActions() {
         })
       });
       
-      // Note: No grammar skip endpoint yet - just load next pattern
-      // TODO: Add POST /grammar/:id/skip endpoint
+      // Advance to next pattern
+      await apiRequest(`/grammar/${currentGrammar.id}/skip`, {
+        method: 'POST',
+        body: JSON.stringify({ status: 'studied' })
+      });
       await loadDailyGrammar();
     } catch (error) {
       console.error('Failed to save grammar progress:', error);
