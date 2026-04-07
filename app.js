@@ -340,29 +340,39 @@ function displayProgress(progressData, statsData) {
   const progress = progressData.progress || progressData;
   const stats = statsData || {};
   
-  document.getElementById('vocab-learned').textContent = progress.words_learned || 0;
-  document.getElementById('grammar-learned').textContent = progress.grammar_learned || 0;
-  document.getElementById('streak-days').textContent = progress.streak_days || 0;
-  document.getElementById('current-level').textContent = progress.current_level || 'N5';
+  // Get values from progress response
+  const vocabLearned = progress.words_learned || 0;
+  const grammarLearned = progress.grammar_learned || 0;
+  const streakDays = progress.streak_days || 0;
+  const currentLevel = progress.current_level || 'N5';
+  const vocabIndex = progress.current_vocab_index || 0;
+  const grammarIndex = progress.current_grammar_index || 0;
+  const totalWords = progress.total_words_in_level || 50;
+  
+  document.getElementById('vocab-learned').textContent = vocabLearned;
+  document.getElementById('grammar-learned').textContent = grammarLearned;
+  document.getElementById('streak-days').textContent = streakDays;
+  document.getElementById('current-level').textContent = currentLevel;
   
   // Level progress bars - calculate from current indices vs totals
   const container = document.getElementById('level-progress-bars');
+  if (!container) return;
+  
   container.innerHTML = '';
   
   const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
-  const currentLevel = progress.current_level || 'N5';
-  const vocabIndex = progress.current_vocab_index || 0;
-  const totalWords = progress.total_words_in_level || 50;
+  const currentLevelIndex = levels.indexOf(currentLevel);
   
-  // Simple progress: N5 = current position, others = 0 or 100 if passed
+  // Calculate progress per level
   const progressPerLevel = {};
-  levels.forEach(level => {
-    if (level === currentLevel) {
-      progressPerLevel[level] = Math.round((vocabIndex / totalWords) * 100);
-    } else if (levels.indexOf(level) < levels.indexOf(currentLevel)) {
-      progressPerLevel[level] = 100; // Completed
+  levels.forEach((level, index) => {
+    if (index < currentLevelIndex) {
+      progressPerLevel[level] = 100; // Completed previous levels
+    } else if (index === currentLevelIndex) {
+      // Current level - calculate % from vocab index
+      progressPerLevel[level] = Math.min(100, Math.round((vocabIndex / totalWords) * 100));
     } else {
-      progressPerLevel[level] = 0; // Not started
+      progressPerLevel[level] = 0; // Future levels
     }
   });
   
