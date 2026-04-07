@@ -13,17 +13,27 @@ const mainScreen = document.getElementById('main-screen');
 const loadingOverlay = document.getElementById('loading-overlay');
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  if (token) {
-    showMainScreen();
-  } else {
-    showAuthScreen();
-  }
-  
+document.addEventListener('DOMContentLoaded', async () => {
   setupAuthTabs();
   setupForms();
   setupNavigation();
   setupActions();
+  
+  if (token) {
+    // Validate token by making a test request
+    try {
+      await apiRequest('/auth/me');
+      showMainScreen();
+    } catch (error) {
+      console.log('Token invalid, showing login');
+      token = null;
+      localStorage.removeItem('kotoba_token');
+      showAuthScreen();
+      showAuthError('Session expired. Please login again.');
+    }
+  } else {
+    showAuthScreen();
+  }
 });
 
 // Auth
@@ -126,6 +136,7 @@ function showAuthError(message) {
 function showAuthScreen() {
   authScreen.classList.add('active');
   mainScreen.classList.remove('active');
+  hideLoading(); // Ensure loading is hidden when showing auth
 }
 
 function showMainScreen() {
@@ -499,6 +510,7 @@ function showError(message) {
 function logout() {
   token = null;
   localStorage.removeItem('kotoba_token');
+  hideLoading(); // Clear any loading state
   showAuthScreen();
 }
 
