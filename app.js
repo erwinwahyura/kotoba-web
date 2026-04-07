@@ -395,6 +395,12 @@ function setupActions() {
         })
       });
       
+      // Advance to next word
+      await apiRequest(`/vocab/skip/${currentWord.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ status: 'known' })
+      });
+      
       // Load next word
       await loadDailyVocab();
     } catch (error) {
@@ -405,9 +411,23 @@ function setupActions() {
     }
   });
   
-  document.getElementById('next-word-btn').addEventListener('click', () => {
-    // Get next word without marking (skip)
-    loadDailyVocab();
+  document.getElementById('next-word-btn').addEventListener('click', async () => {
+    // Skip without marking - advance index then reload
+    if (!currentWord) return;
+    
+    showLoading();
+    try {
+      await apiRequest(`/vocab/skip/${currentWord.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ status: 'skipped' })
+      });
+      await loadDailyVocab();
+    } catch (error) {
+      console.error('Failed to skip word:', error);
+      showError('Failed to skip. Please try again.');
+    } finally {
+      hideLoading();
+    }
   });
   
   // Grammar actions
@@ -439,6 +459,12 @@ function setupActions() {
           item_type: 'grammar',
           quality: 3
         })
+      });
+      
+      // Advance to next pattern
+      await apiRequest(`/grammar/skip/${currentGrammar.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ status: 'studied' })
       });
       
       await loadDailyGrammar();
