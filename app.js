@@ -335,24 +335,36 @@ async function loadProgress() {
   }
 }
 
-function displayProgress(progress, stats) {
-  document.getElementById('vocab-learned').textContent = stats.words_learned || 0;
-  document.getElementById('grammar-learned').textContent = stats.grammar_learned || 0;
-  document.getElementById('streak-days').textContent = stats.streak_days || 0;
-  document.getElementById('current-level').textContent = progress.current_jlpt_level || 'N5';
+function displayProgress(progressData, statsData) {
+  // Handle nested data structure: API returns { data: { progress: {...} } }
+  const progress = progressData.progress || progressData;
+  const stats = statsData || {};
   
-  // Level progress bars
+  document.getElementById('vocab-learned').textContent = progress.words_learned || 0;
+  document.getElementById('grammar-learned').textContent = progress.grammar_learned || 0;
+  document.getElementById('streak-days').textContent = progress.streak_days || 0;
+  document.getElementById('current-level').textContent = progress.current_level || 'N5';
+  
+  // Level progress bars - calculate from current indices vs totals
   const container = document.getElementById('level-progress-bars');
   container.innerHTML = '';
   
   const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
-  const progressPerLevel = {
-    'N5': progress.n5_progress || 0,
-    'N4': progress.n4_progress || 0,
-    'N3': progress.n3_progress || 0,
-    'N2': progress.n2_progress || 0,
-    'N1': progress.n1_progress || 0
-  };
+  const currentLevel = progress.current_level || 'N5';
+  const vocabIndex = progress.current_vocab_index || 0;
+  const totalWords = progress.total_words_in_level || 50;
+  
+  // Simple progress: N5 = current position, others = 0 or 100 if passed
+  const progressPerLevel = {};
+  levels.forEach(level => {
+    if (level === currentLevel) {
+      progressPerLevel[level] = Math.round((vocabIndex / totalWords) * 100);
+    } else if (levels.indexOf(level) < levels.indexOf(currentLevel)) {
+      progressPerLevel[level] = 100; // Completed
+    } else {
+      progressPerLevel[level] = 0; // Not started
+    }
+  });
   
   levels.forEach(level => {
     const percent = progressPerLevel[level] || 0;
@@ -378,40 +390,21 @@ function setupActions() {
     e.preventDefault();
     e.stopPropagation();
     
-    // TRACE: Step 0 - Handler fired
-    alert('STEP 0: Already Know clicked!');
-    console.log('STEP 0: Handler fired');
-    
     if (!currentWord) {
-      alert('ERROR: No current word!');
-      console.error('No current word loaded');
+      showError('No word loaded. Please wait.');
       return;
     }
     
-    alert(`STEP 1: currentWord.id = ${currentWord.id}`);
-    console.log('STEP 1: currentWord:', currentWord);
-    
     showLoading();
     try {
-      // Advance to next word (skip the SRS for now - just test skip)
-      alert(`STEP 2: Calling /vocab/${currentWord.id}/skip`);
-      console.log('STEP 2: Calling skip endpoint');
-      
-      const skipResult = await apiRequest(`/vocab/${currentWord.id}/skip`, {
+      // Advance to next word
+      await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'known' })
       });
       
-      alert(`STEP 3: Skip success! Got: ${skipResult.data?.vocabulary?.word || 'unknown'}`);
-      console.log('STEP 3: Skip result:', skipResult);
-      
-      // Load next word
-      alert('STEP 4: Loading next word...');
       await loadDailyVocab();
-      
-      alert('STEP 5: DONE!');
     } catch (error) {
-      alert(`ERROR: ${error.message}`);
       console.error('Error:', error);
       showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
@@ -423,27 +416,20 @@ function setupActions() {
     e.preventDefault();
     e.stopPropagation();
     
-    alert('NEXT: Button clicked!');
-    console.log('Next Word clicked, currentWord:', currentWord);
-    
     if (!currentWord) {
-      alert('ERROR: No current word loaded');
+      showError('No word loaded. Please wait.');
       return;
     }
     
-    alert(`NEXT: Will skip word ID: ${currentWord.id}`);
-    
     showLoading();
     try {
-      const result = await apiRequest(`/vocab/${currentWord.id}/skip`, {
+      await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'skipped' })
       });
-      alert(`NEXT: Skip OK! Next word: ${result.data?.vocabulary?.word || 'unknown'}`);
       await loadDailyVocab();
-      alert('NEXT: Done!');
     } catch (error) {
-      alert(`NEXT ERROR: ${error.message}`);
+      console.error('Error:', error);
       showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
       hideLoading();
@@ -460,38 +446,31 @@ function setupActions() {
   
   document.getElementById('next-grammar-btn').addEventListener('click', async (e) => {
     e.preventDefault();
-    if (!currentGrammar) return;
+    
+    alert('GRAMMAR: Button clicked!');
+    if (!currentGrammar) {
+      alert('GRAMMAR ERROR: No current pattern loaded');
+      return;
+    }
+    
+    alert(`GRAMMAR: Will skip pattern ID: ${currentGrammar.id}`);
     
     showLoading();
     try {
-      // Initialize grammar in SRS if not already
-      await apiRequest('/srs/init', {
-        method: 'POST',
-        body: JSON.stringify({
-          item_id: currentGrammar.id,
-          item_type: 'grammar'
-        })
-      });
-      
-      // Submit review (neutral quality 3)
-      await apiRequest('/srs/review', {
-        method: 'POST',
-        body: JSON.stringify({
-          item_id: currentGrammar.id,
-          item_type: 'grammar',
-          quality: 3
-        })
-      });
-      
       // Advance to next pattern
-      await apiRequest(`/grammar/${currentGrammar.id}/skip`, {
+      alert(`GRAMMAR: Calling /grammar/${currentGrammar.id}/skip`);
+      const result = await apiRequest(`/grammar/${currentGrammar.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'studied' })
       });
+      
+      alert(`GRAMMAR: Skip OK! Next pattern: ${result.data?.pattern?.pattern || 'unknown'}`);
       await loadDailyGrammar();
+      alert('GRAMMAR: Done!');
     } catch (error) {
+      alert(`GRAMMAR ERROR: ${error.message}`);
       console.error('Failed to save grammar progress:', error);
-      showError('Failed to save progress. Please try again.');
+      showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
       hideLoading();
     }
