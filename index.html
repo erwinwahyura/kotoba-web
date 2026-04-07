@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kotoba — 毎日の日本語</title>
+  <meta name="description" content="Daily Japanese vocabulary and grammar learning" />
+  <meta name="theme-color" content="#ffffff" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+</head>
+<body>
+  <div id="app">
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen active">
+      <div class="auth-container">
+        <div class="logo">
+          <span class="logo-ja">言葉</span>
+          <span class="logo-en">Kotoba</span>
+        </div>
+        <p class="tagline">Daily Japanese — 毎日の日本語</p>
+        
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Login</button>
+          <button class="auth-tab" data-tab="register">Register</button>
+        </div>
+        
+        <form id="login-form" class="auth-form">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" placeholder="you@example.com" required />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+        
+        <form id="register-form" class="auth-form hidden">
+          <div class="form-group">
+            <label for="reg-name">Name</label>
+            <input type="text" id="reg-name" placeholder="Your name" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Email</label>
+            <input type="email" id="reg-email" placeholder="you@example.com" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" placeholder="••••••••" required minlength="8" />
+          </div>
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </form>
+        
+        <p class="auth-error" id="auth-error"></p>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-screen" class="screen">
+      <header class="app-header">
+        <div class="header-left">
+          <span class="logo-small">言葉</span>
+        </div>
+        <nav class="header-nav">
+          <button class="nav-btn active" data-view="vocab">
+            <span class="nav-icon">語</span>
+            <span class="nav-label">Vocab</span>
+          </button>
+          <button class="nav-btn" data-view="grammar">
+            <span class="nav-icon">文</span>
+            <span class="nav-label">Grammar</span>
+          </button>
+          <button class="nav-btn" data-view="progress">
+            <span class="nav-icon">進</span>
+            <span class="nav-label">Progress</span>
+          </button>
+        </nav>
+        <div class="header-right">
+          <button class="btn-icon" id="logout-btn" title="Logout">→</button>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <!-- Vocabulary View -->
+        <div id="vocab-view" class="view active">
+          <div class="view-header">
+            <span class="view-label">Today's Word</span>
+            <span class="level-badge" id="vocab-level">N5</span>
+          </div>
+          
+          <div class="card word-card" id="word-card">
+            <div class="word-main">
+              <div class="word-jp" id="word-jp">Loading...</div>
+              <div class="word-reading" id="word-reading"></div>
+              <div class="word-meaning" id="word-meaning"></div>
+            </div>
+            
+            <div class="word-details">
+              <div class="detail-section">
+                <span class="detail-label">Explanation</span>
+                <p class="detail-text" id="word-explanation"></p>
+              </div>
+              
+              <div class="detail-section">
+                <span class="detail-label">Examples</span>
+                <div class="examples-list" id="word-examples"></div>
+              </div>
+              
+              <div class="detail-section" id="word-notes-section">
+                <span class="detail-label">Usage Notes</span>
+                <p class="detail-text" id="word-notes"></p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="actions">
+            <button class="btn btn-secondary" id="skip-word-btn">
+              Already Know
+            </button>
+            <button class="btn btn-primary" id="next-word-btn">
+              Next Word →
+            </button>
+          </div>
+        </div>
+
+        <!-- Grammar View -->
+        <div id="grammar-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Grammar Pattern</span>
+            <span class="level-badge" id="grammar-level">N3</span>
+          </div>
+          
+          <div class="card grammar-card" id="grammar-card">
+            <div class="grammar-main">
+              <div class="grammar-pattern" id="grammar-pattern">Loading...</div>
+              <div class="grammar-meaning" id="grammar-meaning"></div>
+            </div>
+            
+            <div class="grammar-details">
+              <div class="detail-section">
+                <span class="detail-label">Conjugation</span>
+                <div class="conjugation-box" id="grammar-conjugation"></div>
+              </div>
+              
+              <div class="detail-section">
+                <span class="detail-label">Explanation</span>
+                <p class="detail-text" id="grammar-explanation"></p>
+              </div>
+              
+              <div class="detail-section">
+                <span class="detail-label">Examples</span>
+                <div class="examples-list" id="grammar-examples"></div>
+              </div>
+              
+              <div class="detail-section nuance-section">
+                <span class="detail-label">Nuance</span>
+                <p class="detail-text" id="grammar-nuance"></p>
+              </div>
+              
+              <div class="detail-section mistakes-section">
+                <span class="detail-label warning">Common Mistakes</span>
+                <p class="detail-text warning-text" id="grammar-mistakes"></p>
+              </div>
+              
+              <div class="detail-section related-section" id="grammar-related-section">
+                <span class="detail-label">Related Patterns</span>
+                <div class="related-list" id="grammar-related"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="actions">
+            <button class="btn btn-secondary" id="prev-grammar-btn">
+              ← Previous
+            </button>
+            <button class="btn btn-primary" id="next-grammar-btn">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress View -->
+        <div id="progress-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Your Progress</span>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-number" id="vocab-learned">0</span>
+              <span class="stat-label">Words Learned</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="grammar-learned">0</span>
+              <span class="stat-label">Patterns Learned</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="streak-days">0</span>
+              <span class="stat-label">Day Streak</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="current-level">N5</span>
+              <span class="stat-label">Current Level</span>
+            </div>
+          </div>
+          
+          <div class="card level-progress">
+            <span class="detail-label">Level Progress</span>
+            <div class="progress-bars" id="level-progress-bars">
+              <!-- Generated by JS -->
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
