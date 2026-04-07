@@ -399,7 +399,7 @@ function setupActions() {
       });
       
       // Advance to next word
-      await apiRequest(`/vocab/skip/${currentWord.id}`, {
+      await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'known' })
       });
@@ -420,7 +420,7 @@ function setupActions() {
     
     showLoading();
     try {
-      await apiRequest(`/vocab/skip/${currentWord.id}`, {
+      await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'skipped' })
       });
@@ -464,12 +464,8 @@ function setupActions() {
         })
       });
       
-      // Advance to next pattern
-      await apiRequest(`/grammar/skip/${currentGrammar.id}`, {
-        method: 'POST',
-        body: JSON.stringify({ status: 'studied' })
-      });
-      
+      // Note: No grammar skip endpoint yet - just load next pattern
+      // TODO: Add POST /grammar/:id/skip endpoint
       await loadDailyGrammar();
     } catch (error) {
       console.error('Failed to save grammar progress:', error);
