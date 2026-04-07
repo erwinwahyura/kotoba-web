@@ -1,5 +1,5 @@
 // Kotoba Service Worker
-const CACHE_NAME = 'kotoba-v1';
+const CACHE_NAME = 'kotoba-v2'; // Cache bust - force update
 const STATIC_ASSETS = [
   '/',
   '/index.html',
