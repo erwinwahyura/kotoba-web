@@ -377,49 +377,42 @@ function setupActions() {
   document.getElementById('skip-word-btn').addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    // "Already Know" - mark as mastered via SRS
-    console.log('Already Know clicked, currentWord:', currentWord);
+    
+    // TRACE: Step 0 - Handler fired
+    alert('STEP 0: Already Know clicked!');
+    console.log('STEP 0: Handler fired');
+    
     if (!currentWord) {
+      alert('ERROR: No current word!');
       console.error('No current word loaded');
-      showError('No word loaded. Please wait for word to load.');
       return;
     }
     
+    alert(`STEP 1: currentWord.id = ${currentWord.id}`);
+    console.log('STEP 1: currentWord:', currentWord);
+    
     showLoading();
     try {
-      console.log('Initializing SRS for word:', currentWord.id);
-      await apiRequest('/srs/init', {
-        method: 'POST',
-        body: JSON.stringify({
-          item_id: currentWord.id,
-          item_type: 'vocabulary'
-        })
-      });
+      // Advance to next word (skip the SRS for now - just test skip)
+      alert(`STEP 2: Calling /vocab/${currentWord.id}/skip`);
+      console.log('STEP 2: Calling skip endpoint');
       
-      // Submit perfect review (quality 5)
-      console.log('Submitting SRS review');
-      await apiRequest('/srs/review', {
-        method: 'POST',
-        body: JSON.stringify({
-          item_id: currentWord.id,
-          item_type: 'vocabulary',
-          quality: 5
-        })
-      });
-      
-      // Advance to next word
-      console.log('Skipping to next word');
-      await apiRequest(`/vocab/${currentWord.id}/skip`, {
+      const skipResult = await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'known' })
       });
       
+      alert(`STEP 3: Skip success! Got: ${skipResult.data?.vocabulary?.word || 'unknown'}`);
+      console.log('STEP 3: Skip result:', skipResult);
+      
       // Load next word
-      console.log('Loading next word');
+      alert('STEP 4: Loading next word...');
       await loadDailyVocab();
-      console.log('Done!');
+      
+      alert('STEP 5: DONE!');
     } catch (error) {
-      console.error('Failed to mark word as known:', error);
+      alert(`ERROR: ${error.message}`);
+      console.error('Error:', error);
       showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
       hideLoading();
@@ -429,26 +422,28 @@ function setupActions() {
   document.getElementById('next-word-btn').addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    // Skip without marking - advance index then reload
+    
+    alert('NEXT: Button clicked!');
     console.log('Next Word clicked, currentWord:', currentWord);
+    
     if (!currentWord) {
-      console.error('No current word loaded');
-      showError('No word loaded. Please wait for word to load.');
+      alert('ERROR: No current word loaded');
       return;
     }
     
+    alert(`NEXT: Will skip word ID: ${currentWord.id}`);
+    
     showLoading();
     try {
-      console.log('Skipping word:', currentWord.id);
-      await apiRequest(`/vocab/${currentWord.id}/skip`, {
+      const result = await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'skipped' })
       });
-      console.log('Loading next word');
+      alert(`NEXT: Skip OK! Next word: ${result.data?.vocabulary?.word || 'unknown'}`);
       await loadDailyVocab();
-      console.log('Done!');
+      alert('NEXT: Done!');
     } catch (error) {
-      console.error('Failed to skip word:', error);
+      alert(`NEXT ERROR: ${error.message}`);
       showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
       hideLoading();
