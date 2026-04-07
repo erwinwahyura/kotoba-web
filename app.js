@@ -376,10 +376,16 @@ function setupActions() {
   // Vocab actions
   document.getElementById('skip-word-btn').addEventListener('click', async () => {
     // "Already Know" - mark as mastered via SRS
-    if (!currentWord) return;
+    console.log('Already Know clicked, currentWord:', currentWord);
+    if (!currentWord) {
+      console.error('No current word loaded');
+      showError('No word loaded. Please wait for word to load.');
+      return;
+    }
     
     showLoading();
     try {
+      console.log('Initializing SRS for word:', currentWord.id);
       await apiRequest('/srs/init', {
         method: 'POST',
         body: JSON.stringify({
@@ -389,6 +395,7 @@ function setupActions() {
       });
       
       // Submit perfect review (quality 5)
+      console.log('Submitting SRS review');
       await apiRequest('/srs/review', {
         method: 'POST',
         body: JSON.stringify({
@@ -399,16 +406,19 @@ function setupActions() {
       });
       
       // Advance to next word
+      console.log('Skipping to next word');
       await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'known' })
       });
       
       // Load next word
+      console.log('Loading next word');
       await loadDailyVocab();
+      console.log('Done!');
     } catch (error) {
       console.error('Failed to mark word as known:', error);
-      showError('Failed to save progress. Please try again.');
+      showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
       hideLoading();
     }
@@ -416,18 +426,26 @@ function setupActions() {
   
   document.getElementById('next-word-btn').addEventListener('click', async () => {
     // Skip without marking - advance index then reload
-    if (!currentWord) return;
+    console.log('Next Word clicked, currentWord:', currentWord);
+    if (!currentWord) {
+      console.error('No current word loaded');
+      showError('No word loaded. Please wait for word to load.');
+      return;
+    }
     
     showLoading();
     try {
+      console.log('Skipping word:', currentWord.id);
       await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'skipped' })
       });
+      console.log('Loading next word');
       await loadDailyVocab();
+      console.log('Done!');
     } catch (error) {
       console.error('Failed to skip word:', error);
-      showError('Failed to skip. Please try again.');
+      showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
       hideLoading();
     }
