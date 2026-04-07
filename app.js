@@ -376,6 +376,7 @@ function setupActions() {
   // Vocab actions
   document.getElementById('skip-word-btn').addEventListener('click', async () => {
     // "Already Know" - mark as mastered via SRS
+    alert('CLICK: Already Know');  // DEBUG
     console.log('Already Know clicked, currentWord:', currentWord);
     if (!currentWord) {
       console.error('No current word loaded');
@@ -426,6 +427,7 @@ function setupActions() {
   
   document.getElementById('next-word-btn').addEventListener('click', async () => {
     // Skip without marking - advance index then reload
+    alert('CLICK: Next Word');  // DEBUG
     console.log('Next Word clicked, currentWord:', currentWord);
     if (!currentWord) {
       console.error('No current word loaded');
