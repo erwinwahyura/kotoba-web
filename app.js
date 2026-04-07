@@ -131,6 +131,9 @@ function showAuthScreen() {
 function showMainScreen() {
   authScreen.classList.remove('active');
   mainScreen.classList.add('active');
+  
+  // Initialize vocab view on first load
+  switchView('vocab');
 }
 
 // Navigation
