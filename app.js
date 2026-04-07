@@ -4,6 +4,8 @@ const API_URL = 'https://kotoba.erwarx.com/api';
 // State
 let token = localStorage.getItem('kotoba_token');
 let currentView = 'vocab';
+let currentWord = null;
+let currentGrammar = null;
 
 // DOM Elements
 const authScreen = document.getElementById('auth-screen');
@@ -197,7 +199,8 @@ async function loadDailyVocab() {
   
   try {
     const data = await apiRequest('/vocab/daily');
-    displayWord(data.data.vocabulary);
+    currentWord = data.data.vocabulary;
+    displayWord(currentWord, data.data.progress);
   } catch (error) {
     console.error('Failed to load vocab:', error);
     document.getElementById('word-jp').textContent = 'Error loading word';
@@ -206,7 +209,7 @@ async function loadDailyVocab() {
   }
 }
 
-function displayWord(word) {
+function displayWord(word, progress) {
   document.getElementById('vocab-level').textContent = word.jlpt_level;
   document.getElementById('vocab-level').className = `level-badge ${word.jlpt_level.toLowerCase()}`;
   document.getElementById('word-jp').textContent = word.word;
@@ -236,6 +239,7 @@ async function loadDailyGrammar() {
   
   try {
     const data = await apiRequest('/grammar/daily');
+    currentGrammar = data.data.pattern;
     displayGrammar(data.data.pattern, data.data.progress);
   } catch (error) {
     console.error('Failed to load grammar:', error);
@@ -368,23 +372,91 @@ function displayProgress(progress, stats) {
 function setupActions() {
   // Vocab actions
   document.getElementById('skip-word-btn').addEventListener('click', async () => {
-    // For now just load next - actual skip needs word ID
-    await loadDailyVocab();
+    // "Already Know" - mark as mastered via SRS
+    if (!currentWord) return;
+    
+    showLoading();
+    try {
+      await apiRequest('/srs/init', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: currentWord.id,
+          item_type: 'vocabulary'
+        })
+      });
+      
+      // Submit perfect review (quality 5)
+      await apiRequest('/srs/review', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: currentWord.id,
+          item_type: 'vocabulary',
+          quality: 5
+        })
+      });
+      
+      // Load next word
+      await loadDailyVocab();
+    } catch (error) {
+      console.error('Failed to mark word as known:', error);
+      showError('Failed to save progress. Please try again.');
+    } finally {
+      hideLoading();
+    }
   });
   
   document.getElementById('next-word-btn').addEventListener('click', () => {
+    // Get next word without marking (skip)
     loadDailyVocab();
   });
   
   // Grammar actions
   document.getElementById('prev-grammar-btn').addEventListener('click', () => {
     // Navigate through grammar patterns
+    if (!currentGrammar) return;
     alert('Previous pattern - coming soon!');
   });
   
-  document.getElementById('next-grammar-btn').addEventListener('click', () => {
-    loadDailyGrammar();
+  document.getElementById('next-grammar-btn').addEventListener('click', async () => {
+    if (!currentGrammar) return;
+    
+    showLoading();
+    try {
+      // Initialize grammar in SRS if not already
+      await apiRequest('/srs/init', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: currentGrammar.id,
+          item_type: 'grammar'
+        })
+      });
+      
+      // Submit review (neutral quality 3)
+      await apiRequest('/srs/review', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: currentGrammar.id,
+          item_type: 'grammar',
+          quality: 3
+        })
+      });
+      
+      await loadDailyGrammar();
+    } catch (error) {
+      console.error('Failed to save grammar progress:', error);
+      showError('Failed to save progress. Please try again.');
+    } finally {
+      hideLoading();
+    }
   });
+}
+
+function showError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error-toast';
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
+  setTimeout(() => errorDiv.remove(), 3000);
 }
 
 // Utilities
