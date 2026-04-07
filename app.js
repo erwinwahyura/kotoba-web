@@ -374,9 +374,10 @@ function displayProgress(progress, stats) {
 // Actions
 function setupActions() {
   // Vocab actions
-  document.getElementById('skip-word-btn').addEventListener('click', async () => {
+  document.getElementById('skip-word-btn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     // "Already Know" - mark as mastered via SRS
-    alert('CLICK: Already Know');  // DEBUG
     console.log('Already Know clicked, currentWord:', currentWord);
     if (!currentWord) {
       console.error('No current word loaded');
@@ -425,9 +426,10 @@ function setupActions() {
     }
   });
   
-  document.getElementById('next-word-btn').addEventListener('click', async () => {
+  document.getElementById('next-word-btn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     // Skip without marking - advance index then reload
-    alert('CLICK: Next Word');  // DEBUG
     console.log('Next Word clicked, currentWord:', currentWord);
     if (!currentWord) {
       console.error('No current word loaded');
@@ -454,13 +456,15 @@ function setupActions() {
   });
   
   // Grammar actions
-  document.getElementById('prev-grammar-btn').addEventListener('click', () => {
+  document.getElementById('prev-grammar-btn').addEventListener('click', (e) => {
+    e.preventDefault();
     // Navigate through grammar patterns
     if (!currentGrammar) return;
     alert('Previous pattern - coming soon!');
   });
   
-  document.getElementById('next-grammar-btn').addEventListener('click', async () => {
+  document.getElementById('next-grammar-btn').addEventListener('click', async (e) => {
+    e.preventDefault();
     if (!currentGrammar) return;
     
     showLoading();
