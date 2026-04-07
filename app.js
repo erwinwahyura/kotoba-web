@@ -257,7 +257,13 @@ async function loadDailyGrammar() {
     displayGrammar(data.data.pattern, data.data.progress);
   } catch (error) {
     console.error('Failed to load grammar:', error);
-    document.getElementById('grammar-pattern').textContent = 'Error loading pattern';
+    // Check if it's "not found" error (no patterns for this level)
+    if (error.message && error.message.includes('not found')) {
+      document.getElementById('grammar-pattern').textContent = 'No patterns for this level yet';
+      document.getElementById('grammar-meaning').textContent = 'Grammar patterns coming soon for ' + document.getElementById('current-level').textContent;
+    } else {
+      document.getElementById('grammar-pattern').textContent = 'Error loading pattern';
+    }
   } finally {
     hideLoading();
   }
