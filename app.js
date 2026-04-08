@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   setupActions();
   setupSRSActions();
+  setupComparisonActions();
   
   if (token) {
     // Validate token by making a test request
@@ -183,6 +184,7 @@ function switchView(view) {
   if (view === 'vocab') loadDailyVocab();
   if (view === 'grammar') loadDailyGrammar();
   if (view === 'srs') loadSRSQueue();
+  if (view === 'compare') loadComparisonPairs();
   if (view === 'progress') loadProgress();
 }
 
@@ -668,6 +670,147 @@ function setupSRSActions() {
       submitReview(quality);
     });
   });
+}
+
+// Grammar Comparison Functions
+let comparisonPairs = [];
+let currentCompareLevel = 'N4';
+
+function setupComparisonActions() {
+  // Compare button from grammar view
+  document.getElementById('compare-grammar-btn')?.addEventListener('click', () => {
+    switchView('compare');
+  });
+  
+  // Back button in detail view
+  document.getElementById('back-to-pairs')?.addEventListener('click', () => {
+    showComparisonList();
+  });
+}
+
+async function loadComparisonPairs() {
+  showLoading();
+  
+  try {
+    const data = await apiRequest(`/grammar/compare/pairs?level=${currentCompareLevel}`);
+    comparisonPairs = data.data.pairs || [];
+    
+    document.getElementById('compare-level').textContent = currentCompareLevel;
+    renderComparisonPairs();
+  } catch (error) {
+    console.error('Failed to load comparison pairs:', error);
+    document.getElementById('compare-pairs-list').innerHTML = 
+      '<div class="compare-pair-card">Error loading comparison pairs</div>';
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderComparisonPairs() {
+  const container = document.getElementById('compare-pairs-list');
+  
+  if (comparisonPairs.length === 0) {
+    container.innerHTML = '<div class="compare-pair-card">No comparison pairs available yet</div>';
+    return;
+  }
+  
+  container.innerHTML = comparisonPairs.map((pair, index) => `
+    <div class="compare-pair-card" data-index="${index}">
+      <div class="compare-pair-header">${pair.name}</div>
+      <div class="compare-pair-desc">${pair.description || 'Compare these patterns'}</div>
+    </div>
+  `).join('');
+  
+  // Add click handlers
+  container.querySelectorAll('.compare-pair-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const index = parseInt(card.dataset.index);
+      loadComparisonDetail(comparisonPairs[index]);
+    });
+  });
+}
+
+async function loadComparisonDetail(pair) {
+  showLoading();
+  
+  try {
+    // Fetch detailed comparison
+    const data = await apiRequest(`/grammar/compare/detail?a=${pair.pattern_a.id}&b=${pair.pattern_b.id}`);
+    const comparison = data.data;
+    
+    // Hide list, show detail
+    document.getElementById('compare-pairs-list').classList.add('hidden');
+    document.getElementById('compare-detail').classList.remove('hidden');
+    
+    // Render patterns
+    document.getElementById('compare-pattern-a').textContent = comparison.pattern_a.pattern;
+    document.getElementById('compare-meaning-a').textContent = comparison.pattern_a.meaning;
+    document.getElementById('compare-pattern-b').textContent = comparison.pattern_b.pattern;
+    document.getElementById('compare-meaning-b').textContent = comparison.pattern_b.meaning;
+    
+    // Render differences
+    const diffContainer = document.getElementById('compare-differences');
+    if (comparison.key_differences && comparison.key_differences.length > 0) {
+      diffContainer.innerHTML = comparison.key_differences.map(diff => `
+        <div class="compare-difference">
+          <div class="compare-difference-aspect">${diff.aspect.replace('_', ' ')}</div>
+          <div class="compare-difference-content">
+            <div class="compare-difference-a">${diff.pattern_a}</div>
+            <div class="compare-difference-b">${diff.pattern_b}</div>
+          </div>
+          ${diff.example_a ? `
+            <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-2);">
+              <div>A: ${diff.example_a}</div>
+              <div>B: ${diff.example_b}</div>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    } else {
+      diffContainer.innerHTML = '<div class="compare-difference">No detailed comparison available</div>';
+    }
+    
+    // Render boundaries
+    const boundaryContainer = document.getElementById('compare-boundaries');
+    if (comparison.usage_boundaries && comparison.usage_boundaries.length > 0) {
+      boundaryContainer.innerHTML = comparison.usage_boundaries.map(b => `
+        <div class="compare-boundary">
+          <span class="compare-boundary-marker">${b.use_pattern}</span>
+          <div>
+            <div class="compare-boundary-text">${b.situation}</div>
+            <div class="compare-boundary-exp">${b.explanation}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      boundaryContainer.innerHTML = '<div class="compare-boundary">Review pattern examples for usage guidance</div>';
+    }
+    
+    // Render errors
+    const errorContainer = document.getElementById('compare-errors');
+    if (comparison.common_errors && comparison.common_errors.length > 0) {
+      errorContainer.innerHTML = comparison.common_errors.map(e => `
+        <div class="compare-error">
+          <div class="compare-error-text">❌ ${e.error}</div>
+          <div class="compare-error-correction">✓ ${e.correction}</div>
+          <div class="compare-error-exp">${e.explanation}</div>
+        </div>
+      `).join('');
+    } else {
+      errorContainer.innerHTML = '<div class="compare-error">No common errors recorded</div>';
+    }
+    
+  } catch (error) {
+    console.error('Failed to load comparison detail:', error);
+    showError('Failed to load comparison detail');
+  } finally {
+    hideLoading();
+  }
+}
+
+function showComparisonList() {
+  document.getElementById('compare-detail').classList.add('hidden');
+  document.getElementById('compare-pairs-list').classList.remove('hidden');
 }
 
 // Service Worker for PWA

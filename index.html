@@ -88,6 +88,10 @@
             <span class="nav-icon">復</span>
             <span class="nav-label">Review</span>
           </button>
+          <button class="nav-btn" data-view="compare">
+            <span class="nav-icon">比</span>
+            <span class="nav-label">Compare</span>
+          </button>
           <button class="nav-btn" data-view="progress">
             <span class="nav-icon">進</span>
             <span class="nav-label">Progress</span>
@@ -191,6 +195,9 @@
             <button type="button" class="btn btn-secondary" id="prev-grammar-btn">
               ← Previous
             </button>
+            <button type="button" class="btn btn-accent" id="compare-grammar-btn">
+              Compare Patterns
+            </button>
             <button type="button" class="btn btn-primary" id="next-grammar-btn">
               Next →
             </button>
@@ -247,6 +254,53 @@
             <div class="srs-stat">
               <span class="srs-stat-value" id="srs-mastered">0</span>
               <span class="srs-stat-label">Mastered</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grammar Comparison View -->
+        <div id="compare-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Pattern Comparison</span>
+            <span class="level-badge" id="compare-level">N4</span>
+          </div>
+          
+          <!-- Comparison Pairs List -->
+          <div id="compare-pairs-list" class="compare-list">
+            <!-- Pairs loaded by JS -->
+          </div>
+          
+          <!-- Detailed Comparison -->
+          <div id="compare-detail" class="compare-detail hidden">
+            <div class="compare-header">
+              <button class="btn btn-secondary btn-sm" id="back-to-pairs">← Back</button>
+            </div>
+            
+            <div class="compare-patterns">
+              <div class="compare-side">
+                <div class="compare-pattern-a" id="compare-pattern-a">Pattern A</div>
+                <div class="compare-meaning-a" id="compare-meaning-a">Meaning A</div>
+              </div>
+              <div class="compare-vs">VS</div>
+              <div class="compare-side">
+                <div class="compare-pattern-b" id="compare-pattern-b">Pattern B</div>
+                <div class="compare-meaning-b" id="compare-meaning-b">Meaning B</div>
+              </div>
+            </div>
+            
+            <div class="compare-section">
+              <h4>Key Differences</h4>
+              <div id="compare-differences" class="compare-differences"></div>
+            </div>
+            
+            <div class="compare-section">
+              <h4>Usage Boundaries</h4>
+              <div id="compare-boundaries" class="compare-boundaries"></div>
+            </div>
+            
+            <div class="compare-section">
+              <h4>Common Errors</h4>
+              <div id="compare-errors" class="compare-errors"></div>
             </div>
           </div>
         </div>
