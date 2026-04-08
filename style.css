@@ -1058,6 +1058,239 @@ h1, h2, h3 {
   margin-top: var(--space-sm);
 }
 
+/* JLPT Test Styles */
+.test-levels {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.test-level-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.test-level-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.test-level-badge {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.test-level-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.test-level-desc {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+.active-test {
+  animation: fadeIn 0.3s ease;
+}
+
+.test-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.test-timer {
+  font-family: monospace;
+  font-size: 1.25rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.test-progress {
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+.test-question-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.test-question-text {
+  font-family: var(--font-jp);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-md);
+}
+
+.test-question-reading {
+  font-family: var(--font-jp);
+  font-size: 1rem;
+  color: var(--text-2);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.test-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.test-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.test-option:hover {
+  border-color: var(--accent);
+}
+
+.test-option.selected {
+  border-color: var(--accent);
+  background: rgba(44, 90, 160, 0.05);
+}
+
+.option-letter {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 24px;
+}
+
+.option-text {
+  color: var(--text);
+}
+
+.test-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.test-results {
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.result-header {
+  margin-bottom: var(--space-xl);
+}
+
+.result-header h3 {
+  margin-bottom: var(--space-md);
+}
+
+.result-score {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-sm);
+}
+
+.result-passed {
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  display: inline-block;
+}
+
+.result-passed.passed {
+  background: rgba(39, 174, 96, 0.1);
+  color: var(--success);
+}
+
+.result-passed.failed {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.result-stat {
+  padding: var(--space-md);
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.result-stat .stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.result-stat .stat-label {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+.result-review {
+  text-align: left;
+  margin-bottom: var(--space-xl);
+}
+
+.review-item {
+  padding: var(--space-md);
+  background: var(--surface);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-sm);
+  border-left: 3px solid #e74c3c;
+}
+
+.review-item .review-answers {
+  display: flex;
+  gap: var(--space-md);
+  margin: var(--space-sm) 0;
+  font-size: 0.875rem;
+}
+
+.your-answer.wrong {
+  color: #e74c3c;
+  text-decoration: line-through;
+}
+
+.correct-answer {
+  color: var(--success);
+}
+
+.review-exp {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin-top: var(--space-sm);
+}
+
 /* TTS Audio Styles */
 .tts-play-btn {
   background: var(--surface);

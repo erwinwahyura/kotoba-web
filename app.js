@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupActions();
   setupSRSActions();
   setupComparisonActions();
+  setupJLPTActions();
   
   if (token) {
     // Validate token by making a test request
@@ -185,6 +186,7 @@ function switchView(view) {
   if (view === 'grammar') loadDailyGrammar();
   if (view === 'srs') loadSRSQueue();
   if (view === 'compare') loadComparisonPairs();
+  if (view === 'tests') loadJLPTTests();
   if (view === 'progress') loadProgress();
 }
 
@@ -927,6 +929,238 @@ function addTTSButtonsToExamples() {
       }
     }
   });
+}
+
+// JLPT Test Functions
+let currentTestSession = null;
+let currentTestQuestions = [];
+let currentQuestionIndex = 0;
+let testAnswers = {};
+let testTimerInterval = null;
+let testStartTime = null;
+
+function setupJLPTActions() {
+  // Level cards
+  document.querySelectorAll('.test-level-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const level = card.dataset.level;
+      startJLPTTest(level);
+    });
+  });
+  
+  // Test navigation
+  document.getElementById('prev-q-btn')?.addEventListener('click', () => {
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      renderTestQuestion();
+    }
+  });
+  
+  document.getElementById('next-q-btn')?.addEventListener('click', () => {
+    if (currentQuestionIndex < currentTestQuestions.length - 1) {
+      currentQuestionIndex++;
+      renderTestQuestion();
+    }
+  });
+  
+  document.getElementById('exit-test-btn')?.addEventListener('click', () => {
+    if (confirm('Exit test? Your progress will be lost.')) {
+      exitTest();
+    }
+  });
+  
+  document.getElementById('finish-test-btn')?.addEventListener('click', () => {
+    finishTest();
+  });
+  
+  document.getElementById('new-test-btn')?.addEventListener('click', () => {
+    document.getElementById('test-results').classList.add('hidden');
+    document.getElementById('test-levels').classList.remove('hidden');
+  });
+}
+
+function loadJLPTTests() {
+  // Show level selection by default
+  document.getElementById('test-levels').classList.remove('hidden');
+  document.getElementById('active-test').classList.add('hidden');
+  document.getElementById('test-results').classList.add('hidden');
+  
+  setupJLPTActions();
+}
+
+async function startJLPTTest(level) {
+  showLoading();
+  
+  try {
+    const data = await apiRequest('/jlpt/start', {
+      method: 'POST',
+      body: JSON.stringify({ level, section: '' })
+    });
+    
+    currentTestSession = data.data.session;
+    currentTestQuestions = data.data.questions;
+    currentQuestionIndex = 0;
+    testAnswers = {};
+    testStartTime = Date.now();
+    
+    // Hide levels, show test
+    document.getElementById('test-levels').classList.add('hidden');
+    document.getElementById('active-test').classList.remove('hidden');
+    document.getElementById('test-results').classList.add('hidden');
+    
+    // Start timer
+    startTestTimer();
+    
+    // Render first question
+    renderTestQuestion();
+    
+  } catch (error) {
+    console.error('Failed to start test:', error);
+    showError('Failed to start test: ' + error.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderTestQuestion() {
+  const question = currentTestQuestions[currentQuestionIndex];
+  if (!question) return;
+  
+  // Update progress
+  document.getElementById('test-q-num').textContent = currentQuestionIndex + 1;
+  document.getElementById('test-q-total').textContent = currentTestQuestions.length;
+  
+  // Update navigation buttons
+  document.getElementById('prev-q-btn').disabled = currentQuestionIndex === 0;
+  document.getElementById('next-q-btn').textContent = 
+    currentQuestionIndex === currentTestQuestions.length - 1 ? 'Review →' : 'Next →';
+  
+  // Render question
+  document.getElementById('test-question').textContent = question.question;
+  document.getElementById('test-reading').textContent = question.question_reading || '';
+  
+  // Render options
+  const optionsContainer = document.getElementById('test-options');
+  optionsContainer.innerHTML = question.options.map((opt, idx) => `
+    <div class="test-option ${testAnswers[question.id] === idx ? 'selected' : ''}" 
+         data-idx="${idx}" onclick="selectTestAnswer('${question.id}', ${idx})">
+      <span class="option-letter">${String.fromCharCode(65 + idx)}</span>
+      <span class="option-text">${opt}</span>
+    </div>
+  `).join('');
+}
+
+function selectTestAnswer(questionId, answerIdx) {
+  testAnswers[questionId] = answerIdx;
+  
+  // Update UI
+  document.querySelectorAll('.test-option').forEach((opt, idx) => {
+    opt.classList.toggle('selected', idx === answerIdx);
+  });
+  
+  // Auto-save to server
+  apiRequest('/jlpt/answer', {
+    method: 'POST',
+    body: JSON.stringify({
+      session_id: currentTestSession.id,
+      question_id: questionId,
+      answer_index: answerIdx
+    })
+  }).catch(err => console.error('Failed to save answer:', err));
+}
+
+function startTestTimer() {
+  const timeLimitMinutes = 20; // Default for N5
+  let remainingSeconds = timeLimitMinutes * 60;
+  
+  updateTimerDisplay(remainingSeconds);
+  
+  testTimerInterval = setInterval(() => {
+    remainingSeconds--;
+    updateTimerDisplay(remainingSeconds);
+    
+    if (remainingSeconds <= 0) {
+      clearInterval(testTimerInterval);
+      finishTest();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  document.getElementById('test-timer').textContent = 
+    `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function exitTest() {
+  if (testTimerInterval) {
+    clearInterval(testTimerInterval);
+    testTimerInterval = null;
+  }
+  
+  currentTestSession = null;
+  currentTestQuestions = [];
+  testAnswers = {};
+  
+  document.getElementById('active-test').classList.add('hidden');
+  document.getElementById('test-levels').classList.remove('hidden');
+}
+
+async function finishTest() {
+  if (testTimerInterval) {
+    clearInterval(testTimerInterval);
+    testTimerInterval = null;
+  }
+  
+  showLoading();
+  
+  try {
+    const result = await apiRequest(`/jlpt/complete/${currentTestSession.id}`, {
+      method: 'POST',
+      body: JSON.stringify({ answers: testAnswers })
+    });
+    
+    const data = result.data;
+    
+    // Show results
+    document.getElementById('active-test').classList.add('hidden');
+    document.getElementById('test-results').classList.remove('hidden');
+    
+    // Populate results
+    document.getElementById('result-score').textContent = 
+      `${data.correct_count}/${data.total_questions} (${Math.round(data.percentage)}%)`;
+    document.getElementById('result-passed').textContent = data.passed ? 'PASSED ✓' : 'FAILED ✗';
+    document.getElementById('result-passed').className = 
+      `result-passed ${data.passed ? 'passed' : 'failed'}`;
+    document.getElementById('result-correct').textContent = data.correct_count;
+    document.getElementById('result-wrong').textContent = data.incorrect_count;
+    document.getElementById('result-time').textContent = data.time_spent;
+    
+    // Render review
+    const reviewContainer = document.getElementById('result-review');
+    if (data.review_questions && data.review_questions.length > 0) {
+      reviewContainer.innerHTML = data.review_questions.map((item, idx) => `
+        <div class="review-item">
+          <div class="review-q-num">Q${item.question_num}</div>
+          <div class="review-question">${item.question}</div>
+          <div class="review-answers">
+            <span class="your-answer wrong">Your: ${item.your_answer}</span>
+            <span class="correct-answer">Correct: ${item.correct_answer}</span>
+          </div>
+          <div class="review-exp">${item.explanation}</div>
+        </div>
+      `).join('');
+    } else {
+      reviewContainer.innerHTML = '<div class="review-item">Perfect score! No mistakes to review.</div>';
+    }
+    
+  } catch (error) {
+    console.error('Failed to complete test:', error);
+    showError('Failed to submit test: ' + error.message);
+  } finally {
+    hideLoading();
+  }
 }
 
 // Service Worker for PWA
