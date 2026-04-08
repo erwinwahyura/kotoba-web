@@ -718,3 +718,143 @@ h1, h2, h3 {
     --text-3: #999999;
   }
 }
+
+/* SRS Review Styles */
+.review-count {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.review-empty {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--text-2);
+}
+
+.review-sub {
+  font-size: 0.875rem;
+  color: var(--text-3);
+  margin-top: var(--space-sm);
+}
+
+.review-type {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  background: var(--surface);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-md);
+}
+
+.review-content {
+  text-align: center;
+  padding: var(--space-xl) 0;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.review-front {
+  font-family: var(--font-jp);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.review-back {
+  animation: fadeIn 0.3s ease;
+}
+
+.review-reading {
+  font-family: var(--font-jp);
+  font-size: 1.25rem;
+  color: var(--text-2);
+  margin-bottom: var(--space-sm);
+}
+
+.review-meaning {
+  font-size: 1.125rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.quality-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.quality-btn {
+  padding: var(--space-md) var(--space-sm);
+  border: 2px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-en);
+}
+
+.quality-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.quality-btn small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.quality-0 { border-color: #e74c3c; color: #e74c3c; }
+.quality-0:hover { background: #e74c3c; color: white; }
+
+.quality-1 { border-color: #e67e22; color: #e67e22; }
+.quality-1:hover { background: #e67e22; color: white; }
+
+.quality-2 { border-color: #27ae60; color: #27ae60; }
+.quality-2:hover { background: #27ae60; color: white; }
+
+.quality-3 { border-color: #3498db; color: #3498db; }
+.quality-3:hover { background: #3498db; color: white; }
+
+.srs-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.srs-stat {
+  text-align: center;
+  padding: var(--space-md);
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.srs-stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.srs-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

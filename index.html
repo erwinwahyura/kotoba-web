@@ -84,6 +84,10 @@
             <span class="nav-icon">文</span>
             <span class="nav-label">Grammar</span>
           </button>
+          <button class="nav-btn" data-view="srs">
+            <span class="nav-icon">復</span>
+            <span class="nav-label">Review</span>
+          </button>
           <button class="nav-btn" data-view="progress">
             <span class="nav-icon">進</span>
             <span class="nav-label">Progress</span>
@@ -190,6 +194,60 @@
             <button type="button" class="btn btn-primary" id="next-grammar-btn">
               Next →
             </button>
+          </div>
+        </div>
+
+        <!-- SRS Review View -->
+        <div id="srs-view" class="view">
+          <div class="view-header">
+            <span class="view-label">SRS Review Queue</span>
+            <span class="review-count" id="review-count">0 due</span>
+          </div>
+          
+          <div class="card review-card" id="review-card">
+            <div class="review-empty" id="review-empty">
+              <p>No items due for review!</p>
+              <p class="review-sub">Check back later or study new words.</p>
+            </div>
+            
+            <div class="review-item hidden" id="review-item">
+              <div class="review-type" id="review-type">vocabulary</div>
+              <div class="review-content" id="review-content">
+                <div class="review-front" id="review-front">Loading...</div>
+                <div class="review-back hidden" id="review-back">
+                  <div class="review-reading" id="review-reading"></div>
+                  <div class="review-meaning" id="review-meaning"></div>
+                </div>
+              </div>
+              
+              <div class="review-actions" id="review-actions-front">
+                <button class="btn btn-primary" id="show-answer-btn">Show Answer</button>
+              </div>
+              
+              <div class="review-actions hidden" id="review-actions-back">
+                <div class="quality-buttons">
+                  <button class="quality-btn quality-0" data-quality="0">Again<br><small>0</small></button>
+                  <button class="quality-btn quality-1" data-quality="1">Hard<br><small>1</small></button>
+                  <button class="quality-btn quality-2" data-quality="2">Good<br><small>2</small></button>
+                  <button class="quality-btn quality-3" data-quality="3">Easy<br><small>3</small></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="srs-stats">
+            <div class="srs-stat">
+              <span class="srs-stat-value" id="srs-due-today">0</span>
+              <span class="srs-stat-label">Due Today</span>
+            </div>
+            <div class="srs-stat">
+              <span class="srs-stat-value" id="srs-new">0</span>
+              <span class="srs-stat-label">New</span>
+            </div>
+            <div class="srs-stat">
+              <span class="srs-stat-value" id="srs-mastered">0</span>
+              <span class="srs-stat-label">Mastered</span>
+            </div>
           </div>
         </div>
 

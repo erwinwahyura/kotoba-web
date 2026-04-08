@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupForms();
   setupNavigation();
   setupActions();
+  setupSRSActions();
   
   if (token) {
     // Validate token by making a test request
@@ -159,6 +160,11 @@ function setupNavigation() {
   document.getElementById('logout-btn').addEventListener('click', logout);
 }
 
+// SRS State
+let currentReviewQueue = [];
+let currentReviewIndex = 0;
+let currentReviewItem = null;
+
 function switchView(view) {
   currentView = view;
   
@@ -176,6 +182,7 @@ function switchView(view) {
   // Load data
   if (view === 'vocab') loadDailyVocab();
   if (view === 'grammar') loadDailyGrammar();
+  if (view === 'srs') loadSRSQueue();
   if (view === 'progress') loadProgress();
 }
 
@@ -526,6 +533,141 @@ function showLoading() {
 
 function hideLoading() {
   loadingOverlay.classList.add('hidden');
+}
+
+// SRS Functions
+async function loadSRSQueue() {
+  showLoading();
+  
+  try {
+    // Get review queue
+    const queueData = await apiRequest('/srs/queue?limit=20');
+    currentReviewQueue = queueData.data || [];
+    currentReviewIndex = 0;
+    
+    // Get stats
+    const statsData = await apiRequest('/srs/stats');
+    const stats = statsData.data || {};
+    
+    // Update stats display
+    document.getElementById('srs-due-today').textContent = stats.due_count || 0;
+    document.getElementById('srs-new').textContent = stats.new_count || 0;
+    document.getElementById('srs-mastered').textContent = stats.mastered_count || 0;
+    document.getElementById('review-count').textContent = `${currentReviewQueue.length} due`;
+    
+    // Show first item or empty state
+    if (currentReviewQueue.length > 0) {
+      showReviewItem(0);
+    } else {
+      showReviewEmpty();
+    }
+  } catch (error) {
+    console.error('Failed to load SRS queue:', error);
+    showReviewEmpty();
+  } finally {
+    hideLoading();
+  }
+}
+
+function showReviewEmpty() {
+  document.getElementById('review-empty').classList.remove('hidden');
+  document.getElementById('review-item').classList.add('hidden');
+}
+
+function showReviewItem(index) {
+  if (index >= currentReviewQueue.length) {
+    showReviewEmpty();
+    return;
+  }
+  
+  currentReviewIndex = index;
+  currentReviewItem = currentReviewQueue[index];
+  
+  // Hide empty, show item
+  document.getElementById('review-empty').classList.add('hidden');
+  document.getElementById('review-item').classList.remove('hidden');
+  
+  // Reset card state (front side)
+  document.getElementById('review-back').classList.add('hidden');
+  document.getElementById('review-actions-front').classList.remove('hidden');
+  document.getElementById('review-actions-back').classList.add('hidden');
+  
+  // Set content
+  const item = currentReviewItem;
+  const isVocab = item.item_type === 'vocabulary';
+  
+  document.getElementById('review-type').textContent = isVocab ? 'Vocabulary' : 'Grammar';
+  
+  if (isVocab) {
+    document.getElementById('review-front').textContent = item.word || item.front;
+  } else {
+    document.getElementById('review-front').textContent = item.pattern || item.front;
+  }
+  
+  // Back side content (hidden initially)
+  if (isVocab) {
+    document.getElementById('review-reading').textContent = item.reading || '';
+    document.getElementById('review-meaning').textContent = item.meaning || item.short_meaning || '';
+  } else {
+    document.getElementById('review-reading').textContent = '';
+    document.getElementById('review-meaning').textContent = item.meaning || '';
+  }
+  
+  // Update counter
+  document.getElementById('review-count').textContent = `${currentReviewQueue.length - index} remaining`;
+}
+
+function showReviewAnswer() {
+  document.getElementById('review-back').classList.remove('hidden');
+  document.getElementById('review-actions-front').classList.add('hidden');
+  document.getElementById('review-actions-back').classList.remove('hidden');
+}
+
+async function submitReview(quality) {
+  if (!currentReviewItem) return;
+  
+  showLoading();
+  
+  try {
+    await apiRequest('/srs/review', {
+      method: 'POST',
+      body: JSON.stringify({
+        item_id: currentReviewItem.id,
+        item_type: currentReviewItem.item_type,
+        quality: quality
+      })
+    });
+    
+    // Move to next item
+    currentReviewIndex++;
+    if (currentReviewIndex < currentReviewQueue.length) {
+      showReviewItem(currentReviewIndex);
+    } else {
+      // Queue complete, refresh stats
+      await loadSRSQueue();
+    }
+  } catch (error) {
+    console.error('Failed to submit review:', error);
+    showError('Failed to save review');
+  } finally {
+    hideLoading();
+  }
+}
+
+// SRS Event Listeners
+function setupSRSActions() {
+  // Show answer button
+  document.getElementById('show-answer-btn')?.addEventListener('click', () => {
+    showReviewAnswer();
+  });
+  
+  // Quality buttons
+  document.querySelectorAll('.quality-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const quality = parseInt(btn.dataset.quality);
+      submitReview(quality);
+    });
+  });
 }
 
 // Service Worker for PWA
