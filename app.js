@@ -241,6 +241,12 @@ function displayWord(word, progress) {
   document.getElementById('word-explanation').textContent = word.detailed_explanation;
   document.getElementById('word-notes').textContent = word.usage_notes || '';
   
+  // Add TTS button to word
+  const wordJp = document.getElementById('word-jp');
+  wordJp.style.cursor = 'pointer';
+  wordJp.title = 'Click to hear pronunciation';
+  wordJp.onclick = () => playTTS(word.word);
+  
   const examplesContainer = document.getElementById('word-examples');
   examplesContainer.innerHTML = '';
   
@@ -250,6 +256,7 @@ function displayWord(word, progress) {
       item.className = 'example-item';
       item.innerHTML = `
         <div class="example-jp">${example}</div>
+        <button class="tts-play-btn" onclick="event.stopPropagation(); playTTS('${example.replace(/'/g, "\\'")}')">▶</button>
       `;
       examplesContainer.appendChild(item);
     });
@@ -287,6 +294,12 @@ function displayGrammar(pattern, progress) {
   document.getElementById('grammar-explanation').textContent = pattern.detailed_explanation;
   document.getElementById('grammar-nuance').textContent = pattern.nuance_notes;
   
+  // Add TTS button to pattern
+  const grammarPattern = document.getElementById('grammar-pattern');
+  grammarPattern.style.cursor = 'pointer';
+  grammarPattern.title = 'Click to hear pronunciation';
+  grammarPattern.onclick = () => playTTS(pattern.pattern.replace(/〜/g, ''));
+  
   // Examples
   const examplesContainer = document.getElementById('grammar-examples');
   examplesContainer.innerHTML = '';
@@ -295,17 +308,21 @@ function displayGrammar(pattern, progress) {
     pattern.usage_examples.forEach(example => {
       const item = document.createElement('div');
       item.className = 'example-item';
+      const japanese = example.japanese.replace(/'/g, "\\'");
       item.innerHTML = `
         <div class="example-jp">${example.japanese}</div>
         <div class="example-reading">${example.reading}</div>
         <div class="example-meaning">${example.meaning}</div>
         <div class="example-context">${example.context}</div>
         ${example.alternative ? `<div class="example-alt">Alt: ${example.alternative}</div>` : ''}
+        <button class="tts-play-btn" onclick="event.stopPropagation(); playTTS('${japanese}')">▶</button>
       `;
       
       // Toggle reading on click
-      item.addEventListener('click', () => {
-        item.classList.toggle('show-reading');
+      item.addEventListener('click', (e) => {
+        if (!e.target.closest('.tts-play-btn')) {
+          item.classList.toggle('show-reading');
+        }
       });
       
       examplesContainer.appendChild(item);
@@ -811,6 +828,105 @@ async function loadComparisonDetail(pair) {
 function showComparisonList() {
   document.getElementById('compare-detail').classList.add('hidden');
   document.getElementById('compare-pairs-list').classList.remove('hidden');
+}
+
+// TTS Audio Functions
+let currentAudio = null;
+let ttsCache = new Map(); // Client-side cache for audio URLs
+
+async function playTTS(text, voiceId = '') {
+  if (!text) return;
+  
+  // Stop any currently playing audio
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  
+  // Check client cache first
+  const cacheKey = text + (voiceId || '');
+  if (ttsCache.has(cacheKey)) {
+    const cached = ttsCache.get(cacheKey);
+    playAudioUrl(cached.audio_url);
+    return;
+  }
+  
+  showLoading();
+  
+  try {
+    const response = await apiRequest('/tts/generate', {
+      method: 'POST',
+      body: JSON.stringify({ text, voice_id: voiceId })
+    });
+    
+    const audioData = response.data;
+    
+    // Cache the result
+    ttsCache.set(cacheKey, audioData);
+    
+    // Play the audio
+    playAudioUrl(audioData.audio_url);
+    
+  } catch (error) {
+    console.error('Failed to generate TTS:', error);
+    showError('Failed to play audio');
+    // Fallback to browser TTS
+    fallbackBrowserTTS(text);
+  } finally {
+    hideLoading();
+  }
+}
+
+function playAudioUrl(url) {
+  const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
+  currentAudio = new Audio(fullUrl);
+  currentAudio.play().catch(err => {
+    console.error('Audio playback failed:', err);
+    showError('Audio playback failed');
+  });
+}
+
+function fallbackBrowserTTS(text) {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 0.8; // Slightly slower for learning
+    speechSynthesis.speak(utterance);
+  } else {
+    showError('Text-to-speech not supported');
+  }
+}
+
+function stopTTS() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+  }
+}
+
+// Add TTS play button to examples
+function addTTSButtonsToExamples() {
+  // Add click handlers to example items for TTS
+  document.querySelectorAll('.example-item').forEach(item => {
+    const japaneseText = item.querySelector('.example-jp')?.textContent;
+    if (japaneseText) {
+      // Add play button if not present
+      if (!item.querySelector('.tts-play-btn')) {
+        const playBtn = document.createElement('button');
+        playBtn.className = 'tts-play-btn';
+        playBtn.innerHTML = '▶';
+        playBtn.title = 'Play audio';
+        playBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playTTS(japaneseText);
+        });
+        item.appendChild(playBtn);
+      }
+    }
+  });
 }
 
 // Service Worker for PWA

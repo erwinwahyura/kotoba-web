@@ -1057,3 +1057,65 @@ h1, h2, h3 {
   color: var(--text-3);
   margin-top: var(--space-sm);
 }
+
+/* TTS Audio Styles */
+.tts-play-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--accent);
+  transition: all 0.2s ease;
+  margin-left: auto;
+  margin-top: var(--space-sm);
+}
+
+.tts-play-btn:hover {
+  background: var(--accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+.tts-play-btn:active {
+  transform: scale(0.95);
+}
+
+.tts-word-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-jp);
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  transition: all 0.2s ease;
+}
+
+.tts-word-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tts-word-btn .play-icon {
+  font-size: 0.875rem;
+  opacity: 0.6;
+}
+
+.tts-loading {
+  animation: pulse 1s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
