@@ -240,28 +240,38 @@ async function loadDailyVocab() {
     displayWord(currentWord, data.data.progress);
   } catch (error) {
     console.error('Failed to load vocab:', error);
-    document.getElementById('word-jp').textContent = 'Error loading word';
+    const wordJp = document.getElementById('word-jp');
+    if (wordJp) wordJp.textContent = 'Error loading word';
   } finally {
     hideLoading();
   }
 }
 
 function displayWord(word, progress) {
-  document.getElementById('vocab-level').textContent = word.jlpt_level;
-  document.getElementById('vocab-level').className = `level-badge ${word.jlpt_level.toLowerCase()}`;
-  document.getElementById('word-jp').textContent = word.word;
-  document.getElementById('word-reading').textContent = word.reading;
-  document.getElementById('word-meaning').textContent = word.short_meaning;
-  document.getElementById('word-explanation').textContent = word.detailed_explanation;
-  document.getElementById('word-notes').textContent = word.usage_notes || '';
+  const vocabLevel = document.getElementById('vocab-level');
+  const wordJp = document.getElementById('word-jp');
+  const wordReading = document.getElementById('word-reading');
+  const wordMeaning = document.getElementById('word-meaning');
+  const wordExplanation = document.getElementById('word-explanation');
+  const wordNotes = document.getElementById('word-notes');
+  const examplesContainer = document.getElementById('word-examples');
+  
+  if (!vocabLevel || !wordJp) return; // View not active
+  
+  vocabLevel.textContent = word.jlpt_level;
+  vocabLevel.className = `level-badge ${word.jlpt_level.toLowerCase()}`;
+  wordJp.textContent = word.word;
+  if (wordReading) wordReading.textContent = word.reading;
+  if (wordMeaning) wordMeaning.textContent = word.short_meaning;
+  if (wordExplanation) wordExplanation.textContent = word.detailed_explanation;
+  if (wordNotes) wordNotes.textContent = word.usage_notes || '';
   
   // Add TTS button to word
-  const wordJp = document.getElementById('word-jp');
   wordJp.style.cursor = 'pointer';
   wordJp.title = 'Click to hear pronunciation';
   wordJp.onclick = () => playTTS(word.word);
   
-  const examplesContainer = document.getElementById('word-examples');
+  if (!examplesContainer) return;
   examplesContainer.innerHTML = '';
   
   if (word.example_sentences && word.example_sentences.length > 0) {
@@ -288,11 +298,18 @@ async function loadDailyGrammar() {
   } catch (error) {
     console.error('Failed to load grammar:', error);
     // Check if it's "not found" error (no patterns for this level)
+    const grammarPattern = document.getElementById('grammar-pattern');
+    if (!grammarPattern) return; // View may have changed
+    
     if (error.message && error.message.includes('not found')) {
-      document.getElementById('grammar-pattern').textContent = 'No patterns for this level yet';
-      document.getElementById('grammar-meaning').textContent = 'Grammar patterns coming soon for ' + document.getElementById('current-level').textContent;
+      grammarPattern.textContent = 'No patterns for this level yet';
+      const grammarMeaning = document.getElementById('grammar-meaning');
+      if (grammarMeaning) {
+        const currentLevel = document.getElementById('current-level');
+        grammarMeaning.textContent = 'Grammar patterns coming soon for ' + (currentLevel?.textContent || 'this level');
+      }
     } else {
-      document.getElementById('grammar-pattern').textContent = 'Error loading pattern';
+      grammarPattern.textContent = 'Error loading pattern';
     }
   } finally {
     hideLoading();
@@ -300,13 +317,24 @@ async function loadDailyGrammar() {
 }
 
 function displayGrammar(pattern, progress) {
-  document.getElementById('grammar-level').textContent = pattern.jlpt_level;
-  document.getElementById('grammar-level').className = `level-badge ${pattern.jlpt_level.toLowerCase()}`;
-  document.getElementById('grammar-pattern').textContent = pattern.pattern;
-  document.getElementById('grammar-meaning').textContent = pattern.meaning;
-  document.getElementById('grammar-conjugation').textContent = pattern.conjugation_rules;
-  document.getElementById('grammar-explanation').textContent = pattern.detailed_explanation;
-  document.getElementById('grammar-nuance').textContent = pattern.nuance_notes;
+  const grammarLevel = document.getElementById('grammar-level');
+  const grammarPattern = document.getElementById('grammar-pattern');
+  
+  if (!grammarLevel || !grammarPattern) return; // View not active
+  
+  grammarLevel.textContent = pattern.jlpt_level;
+  grammarLevel.className = `level-badge ${pattern.jlpt_level.toLowerCase()}`;
+  grammarPattern.textContent = pattern.pattern;
+  
+  const grammarMeaning = document.getElementById('grammar-meaning');
+  const grammarConjugation = document.getElementById('grammar-conjugation');
+  const grammarExplanation = document.getElementById('grammar-explanation');
+  const grammarNuance = document.getElementById('grammar-nuance');
+  
+  if (grammarMeaning) grammarMeaning.textContent = pattern.meaning;
+  if (grammarConjugation) grammarConjugation.textContent = pattern.conjugation_rules;
+  if (grammarExplanation) grammarExplanation.textContent = pattern.detailed_explanation;
+  if (grammarNuance) grammarNuance.textContent = pattern.nuance_notes;
   
   // Add TTS button to pattern
   const grammarPattern = document.getElementById('grammar-pattern');
