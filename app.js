@@ -1766,19 +1766,34 @@ async function loadKanjiData(kanji) {
   
   const data = kanjiData[kanji] || { meaning: 'Unknown', readings: '', strokes: 4 };
   
-  document.getElementById('kanji-meaning').textContent = data.meaning;
-  document.getElementById('kanji-readings').textContent = data.readings;
-  document.getElementById('kanji-total-strokes').textContent = data.strokes;
-  document.getElementById('kanji-stroke-num').textContent = '1';
+  const kanjiMeaning = document.getElementById('kanji-meaning');
+  const kanjiReadings = document.getElementById('kanji-readings');
+  const kanjiTotalStrokes = document.getElementById('kanji-total-strokes');
+  const kanjiStrokeNum = document.getElementById('kanji-stroke-num');
+  
+  if (kanjiMeaning) kanjiMeaning.textContent = data.meaning;
+  if (kanjiReadings) kanjiReadings.textContent = data.readings;
+  if (kanjiTotalStrokes) kanjiTotalStrokes.textContent = data.strokes;
+  if (kanjiStrokeNum) kanjiStrokeNum.textContent = '1';
+}
+
+function getCanvasCoordinates(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+  const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top
+  };
 }
 
 function startKanjiDraw(e) {
   if (!kanjiCtx) return;
   
   isDrawing = true;
-  const rect = kanjiCanvas.getBoundingClientRect();
-  const x = (e.clientX || e.pageX) - rect.left;
-  const y = (e.clientY || e.pageY) - rect.top;
+  const coords = getCanvasCoordinates(e, kanjiCanvas);
+  const x = coords.x;
+  const y = coords.y;
   
   currentStrokePath = [{ x, y }];
   
@@ -1793,9 +1808,9 @@ function startKanjiDraw(e) {
 function drawKanji(e) {
   if (!isDrawing || !kanjiCtx) return;
   
-  const rect = kanjiCanvas.getBoundingClientRect();
-  const x = (e.clientX || e.pageX) - rect.left;
-  const y = (e.clientY || e.pageY) - rect.top;
+  const coords = getCanvasCoordinates(e, kanjiCanvas);
+  const x = coords.x;
+  const y = coords.y;
   
   currentStrokePath.push({ x, y });
   
@@ -2041,20 +2056,22 @@ function getMockArticle(level) {
   return articles[level] || articles['N3'];
 }
 
-function lookupWord(word) {
+// Expose to window for inline handlers
+window.lookupWord = function(word) {
   // In production, show popup with definition and add to SRS
   alert(`Word: ${word}\n\nClick to add to vocabulary list (feature coming soon)`);
-}
+};
 
-function selectReadingAnswer(questionIdx, optionIdx) {
+window.selectReadingAnswer = function(questionIdx, optionIdx) {
   readingAnswers[questionIdx] = optionIdx;
   
   // Update UI
   document.querySelectorAll(`.reading-option[data-question="${questionIdx}"]`).forEach(opt => {
     opt.classList.remove('selected');
   });
-  document.querySelector(`.reading-option[data-question="${questionIdx}"][data-option="${optionIdx}"]`).classList.add('selected');
-}
+  const selectedOption = document.querySelector(`.reading-option[data-question="${questionIdx}"][data-option="${optionIdx}"]`);
+  if (selectedOption) selectedOption.classList.add('selected');
+};
 
 function startReadingTimer() {
   let seconds = 600; // 10 minutes for N3
