@@ -93,6 +93,11 @@
 | "Already Know" didn't mark SRS mastered | HIGH | ✅ FIXED |
 | Progress bars only showed vocab | MEDIUM | ✅ FIXED |
 | Conjugation UI missing | HIGH | ✅ ADDED |
+| Conjugation API response mismatch | HIGH | ✅ FIXED |
+| Search not initialized (missing setup call) | MEDIUM | ✅ FIXED |
+| Duplicate DOMContentLoaded listener | LOW | ✅ FIXED |
+| Duplicate grammarIndex declaration | LOW | ✅ FIXED |
+| Debug alerts in production code | LOW | ✅ FIXED |
 
 ---
 
@@ -124,6 +129,9 @@
 - ✅ Proper error handling with try/catch
 - ✅ Loading states prevent double-submission
 - ✅ API calls use consistent `apiRequest()` wrapper
+- ✅ No debug code (alerts/console.logs) in production
+- ✅ No duplicate variable declarations
+- ✅ Event listeners properly initialized once
 
 ---
 
