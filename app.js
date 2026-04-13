@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupSRSActions();
   setupComparisonActions();
   setupJLPTActions();
+  setupConjugationActions();
   
   if (token) {
     // Validate token by making a test request
@@ -187,6 +188,12 @@ function switchView(view) {
   if (view === 'srs') loadSRSQueue();
   if (view === 'compare') loadComparisonPairs();
   if (view === 'tests') loadJLPTTests();
+  if (view === 'conjugation') {
+    // Conjugation drill - no auto-load, user selects form
+    document.getElementById('conj-form-select')?.classList.remove('hidden');
+    document.getElementById('conj-drill')?.classList.add('hidden');
+    document.getElementById('conj-results')?.classList.add('hidden');
+  }
   if (view === 'progress') loadProgress();
 }
 
@@ -408,21 +415,58 @@ function displayProgress(progressData, statsData) {
   const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
   const currentLevelIndex = levels.indexOf(currentLevel);
   
-  // Calculate progress per level
-  const progressPerLevel = {};
+  // Get grammar progress data
+  const grammarIndex = progress.current_grammar_index || 0;
+  const totalGrammar = progress.total_grammar_in_level || 10;
+  
+  // Calculate progress per level for both vocab and grammar
+  const vocabProgressPerLevel = {};
+  const grammarProgressPerLevel = {};
+  
   levels.forEach((level, index) => {
     if (index < currentLevelIndex) {
-      progressPerLevel[level] = 100; // Completed previous levels
+      vocabProgressPerLevel[level] = 100;
+      grammarProgressPerLevel[level] = 100;
     } else if (index === currentLevelIndex) {
-      // Current level - calculate % from vocab index
-      progressPerLevel[level] = Math.min(100, Math.round((vocabIndex / totalWords) * 100));
+      vocabProgressPerLevel[level] = Math.min(100, Math.round((vocabIndex / totalWords) * 100));
+      grammarProgressPerLevel[level] = Math.min(100, Math.round((grammarIndex / totalGrammar) * 100));
     } else {
-      progressPerLevel[level] = 0; // Future levels
+      vocabProgressPerLevel[level] = 0;
+      grammarProgressPerLevel[level] = 0;
     }
   });
   
+  // Add section header
+  const header = document.createElement('div');
+  header.className = 'progress-section-header';
+  header.innerHTML = '<span class="progress-section-title">Vocabulary</span>';
+  container.appendChild(header);
+  
   levels.forEach(level => {
-    const percent = progressPerLevel[level] || 0;
+    const percent = vocabProgressPerLevel[level] || 0;
+    const item = document.createElement('div');
+    item.className = 'progress-item';
+    item.innerHTML = `
+      <div class="progress-header">
+        <span>${level}</span>
+        <span>${percent}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill ${level.toLowerCase()}" style="width: ${percent}%"></div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+  
+  // Add grammar section header
+  const grammarHeader = document.createElement('div');
+  grammarHeader.className = 'progress-section-header';
+  grammarHeader.style.marginTop = '24px';
+  grammarHeader.innerHTML = '<span class="progress-section-title">Grammar</span>';
+  container.appendChild(grammarHeader);
+  
+  levels.forEach(level => {
+    const percent = grammarProgressPerLevel[level] || 0;
     const item = document.createElement('div');
     item.className = 'progress-item';
     item.innerHTML = `
@@ -452,7 +496,27 @@ function setupActions() {
     
     showLoading();
     try {
-      // Advance to next word
+      // Mark as known: Initialize SRS with quality 5 (mastered) + skip to next
+      // Step 1: Initialize item in SRS if not exists
+      await apiRequest('/srs/init', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          item_id: currentWord.id, 
+          item_type: 'vocabulary' 
+        })
+      });
+      
+      // Step 2: Submit review with quality 5 (mastered)
+      await apiRequest('/srs/review', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: currentWord.id,
+          item_type: 'vocabulary',
+          quality: 5
+        })
+      });
+      
+      // Step 3: Advance to next word
       await apiRequest(`/vocab/${currentWord.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'known' })
@@ -907,6 +971,257 @@ function stopTTS() {
   if ('speechSynthesis' in window) {
     speechSynthesis.cancel();
   }
+}
+
+// ==================== CONJUGATION DRILL ====================
+
+let currentConjSession = null;
+let currentConjChallenges = [];
+let currentConjIndex = 0;
+let conjAnswers = [];
+let conjStreak = 0;
+let conjBestStreak = 0;
+
+function setupConjugationActions() {
+  // Form selection cards
+  document.querySelectorAll('.conj-form-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const form = card.dataset.form;
+      startConjugationDrill(form);
+    });
+  });
+  
+  // Submit answer
+  document.getElementById('conj-submit')?.addEventListener('click', submitConjAnswer);
+  document.getElementById('conj-answer')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') submitConjAnswer();
+  });
+  
+  // Hint button
+  document.getElementById('conj-hint')?.addEventListener('click', showConjHint);
+  
+  // Skip button
+  document.getElementById('conj-skip')?.addEventListener('click', skipConjChallenge);
+  
+  // Next button
+  document.getElementById('conj-next')?.addEventListener('click', nextConjChallenge);
+  
+  // Restart button
+  document.getElementById('conj-restart')?.addEventListener('click', () => {
+    document.getElementById('conj-results').classList.add('hidden');
+    document.getElementById('conj-form-select').classList.remove('hidden');
+  });
+}
+
+async function startConjugationDrill(form) {
+  showLoading();
+  
+  try {
+    const data = await apiRequest(`/conjugation/start?form=${form}&count=10`);
+    
+    currentConjSession = data.data.session;
+    currentConjChallenges = data.data.challenges;
+    currentConjIndex = 0;
+    conjAnswers = [];
+    conjStreak = 0;
+    conjBestStreak = 0;
+    
+    // Hide form selection, show drill
+    document.getElementById('conj-form-select').classList.add('hidden');
+    document.getElementById('conj-drill').classList.remove('hidden');
+    document.getElementById('conj-results').classList.add('hidden');
+    
+    // Reset UI
+    document.getElementById('conj-feedback').classList.add('hidden');
+    document.getElementById('conj-next').classList.add('hidden');
+    document.getElementById('conj-submit').classList.remove('hidden');
+    document.getElementById('conj-answer').value = '';
+    document.getElementById('conj-answer').classList.remove('correct', 'incorrect');
+    document.getElementById('conj-answer').disabled = false;
+    
+    renderConjChallenge();
+    
+  } catch (error) {
+    console.error('Failed to start conjugation drill:', error);
+    showError('Failed to start drill: ' + error.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderConjChallenge() {
+  const challenge = currentConjChallenges[currentConjIndex];
+  if (!challenge) return;
+  
+  // Update progress
+  document.getElementById('conj-progress').textContent = `${currentConjIndex + 1} / ${currentConjChallenges.length}`;
+  
+  // Calculate accuracy
+  const correct = conjAnswers.filter(a => a.correct).length;
+  const accuracy = currentConjIndex > 0 ? Math.round((correct / currentConjIndex) * 100) : 0;
+  document.getElementById('conj-accuracy').textContent = `Accuracy: ${accuracy}%`;
+  
+  // Update streak display
+  document.getElementById('conj-streak').textContent = `🔥 ${conjStreak}`;
+  
+  // Display verb and target form
+  document.getElementById('conj-verb').textContent = challenge.verb;
+  document.getElementById('conj-target').textContent = challenge.target_form;
+  
+  // Reset input
+  const input = document.getElementById('conj-answer');
+  input.value = '';
+  input.classList.remove('correct', 'incorrect');
+  input.disabled = false;
+  input.focus();
+  
+  // Hide feedback
+  document.getElementById('conj-feedback').classList.add('hidden');
+  document.getElementById('conj-next').classList.add('hidden');
+  document.getElementById('conj-submit').classList.remove('hidden');
+  document.getElementById('conj-hint').classList.remove('hidden');
+  document.getElementById('conj-skip').classList.remove('hidden');
+}
+
+async function submitConjAnswer() {
+  const challenge = currentConjChallenges[currentConjIndex];
+  const input = document.getElementById('conj-answer');
+  const answer = input.value.trim();
+  
+  if (!answer) return;
+  
+  showLoading();
+  
+  try {
+    const data = await apiRequest('/conjugation/answer', {
+      method: 'POST',
+      body: JSON.stringify({
+        session_id: currentConjSession.id,
+        challenge_id: challenge.id,
+        answer: answer
+      })
+    });
+    
+    const result = data.data;
+    const isCorrect = result.correct;
+    
+    // Track answer
+    conjAnswers.push({
+      challenge: challenge,
+      answer: answer,
+      correct: isCorrect
+    });
+    
+    // Update streak
+    if (isCorrect) {
+      conjStreak++;
+      if (conjStreak > conjBestStreak) conjBestStreak = conjStreak;
+    } else {
+      conjStreak = 0;
+    }
+    
+    // Update UI
+    input.disabled = true;
+    input.classList.add(isCorrect ? 'correct' : 'incorrect');
+    
+    const feedback = document.getElementById('conj-feedback');
+    feedback.classList.remove('hidden', 'correct', 'incorrect');
+    feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+    
+    document.getElementById('conj-result').textContent = isCorrect ? '✓ Correct!' : '✗ Incorrect';
+    document.getElementById('conj-result').className = 'conj-result ' + (isCorrect ? 'correct' : 'incorrect');
+    document.getElementById('conj-correct-answer').textContent = `Answer: ${result.correct_answer}`;
+    document.getElementById('conj-explanation').textContent = result.explanation || '';
+    
+    // Show next button, hide submit
+    document.getElementById('conj-submit').classList.add('hidden');
+    document.getElementById('conj-hint').classList.add('hidden');
+    document.getElementById('conj-skip').classList.add('hidden');
+    document.getElementById('conj-next').classList.remove('hidden');
+    
+    // Play audio of correct answer if TTS available
+    if (isCorrect && result.correct_answer) {
+      playTTS(result.correct_answer);
+    }
+    
+  } catch (error) {
+    console.error('Failed to submit answer:', error);
+    showError('Failed to check answer');
+  } finally {
+    hideLoading();
+  }
+}
+
+function showConjHint() {
+  const challenge = currentConjChallenges[currentConjIndex];
+  if (challenge && challenge.hint) {
+    const feedback = document.getElementById('conj-feedback');
+    feedback.classList.remove('hidden');
+    feedback.classList.remove('correct', 'incorrect');
+    feedback.style.background = '#fffbeb';
+    feedback.style.border = '1px solid #f59e0b';
+    
+    document.getElementById('conj-result').textContent = '💡 Hint';
+    document.getElementById('conj-result').className = 'conj-result';
+    document.getElementById('conj-result').style.color = '#f59e0b';
+    document.getElementById('conj-correct-answer').textContent = challenge.hint;
+    document.getElementById('conj-explanation').textContent = '';
+  }
+}
+
+function skipConjChallenge() {
+  const challenge = currentConjChallenges[currentConjIndex];
+  
+  // Track as incorrect
+  conjAnswers.push({
+    challenge: challenge,
+    answer: '(skipped)',
+    correct: false
+  });
+  
+  conjStreak = 0;
+  
+  // Show correct answer
+  const input = document.getElementById('conj-answer');
+  input.disabled = true;
+  
+  const feedback = document.getElementById('conj-feedback');
+  feedback.classList.remove('hidden', 'correct', 'incorrect');
+  feedback.classList.add('incorrect');
+  
+  document.getElementById('conj-result').textContent = 'Skipped';
+  document.getElementById('conj-result').className = 'conj-result incorrect';
+  document.getElementById('conj-correct-answer').textContent = `Answer: ${challenge.correct_answer}`;
+  document.getElementById('conj-explanation').textContent = challenge.explanation || '';
+  
+  document.getElementById('conj-submit').classList.add('hidden');
+  document.getElementById('conj-hint').classList.add('hidden');
+  document.getElementById('conj-skip').classList.add('hidden');
+  document.getElementById('conj-next').classList.remove('hidden');
+}
+
+function nextConjChallenge() {
+  currentConjIndex++;
+  
+  if (currentConjIndex >= currentConjChallenges.length) {
+    showConjResults();
+  } else {
+    renderConjChallenge();
+  }
+}
+
+function showConjResults() {
+  document.getElementById('conj-drill').classList.add('hidden');
+  document.getElementById('conj-results').classList.remove('hidden');
+  
+  const correct = conjAnswers.filter(a => a.correct).length;
+  const total = conjAnswers.length;
+  const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+  
+  document.getElementById('conj-final-score').textContent = `${correct}/${total} (${accuracy}%)`;
+  document.getElementById('conj-correct-count').textContent = correct;
+  document.getElementById('conj-wrong-count').textContent = total - correct;
+  document.getElementById('conj-streak-final').textContent = conjBestStreak;
 }
 
 // Add TTS play button to examples

@@ -88,6 +88,10 @@
             <span class="nav-icon">復</span>
             <span class="nav-label">Review</span>
           </button>
+          <button class="nav-btn" data-view="conjugation">
+            <span class="nav-icon">活</span>
+            <span class="nav-label">Conjugation</span>
+          </button>
           <button class="nav-btn" data-view="compare">
             <span class="nav-icon">比</span>
             <span class="nav-label">Compare</span>
@@ -259,6 +263,98 @@
               <span class="srs-stat-value" id="srs-mastered">0</span>
               <span class="srs-stat-label">Mastered</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Conjugation Drill View -->
+        <div id="conjugation-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Conjugation Practice</span>
+            <span class="conjugation-streak" id="conj-streak">🔥 0</span>
+          </div>
+          
+          <!-- Form Selection -->
+          <div id="conj-form-select" class="conj-form-grid">
+            <div class="conj-form-card" data-form="te">
+              <div class="conj-form-name">て形</div>
+              <div class="conj-form-desc">Te-form (connective)</div>
+            </div>
+            <div class="conj-form-card" data-form="nai">
+              <div class="conj-form-name">ない形</div>
+              <div class="conj-form-desc">Negative form</div>
+            </div>
+            <div class="conj-form-card" data-form="ta">
+              <div class="conj-form-name">た形</div>
+              <div class="conj-form-desc">Past form</div>
+            </div>
+            <div class="conj-form-card" data-form="polite">
+              <div class="conj-form-name">丁寧形</div>
+              <div class="conj-form-desc">Polite (masu)</div>
+            </div>
+            <div class="conj-form-card" data-form="potential">
+              <div class="conj-form-name">可能形</div>
+              <div class="conj-form-desc">Potential (can do)</div>
+            </div>
+            <div class="conj-form-card" data-form="passive">
+              <div class="conj-form-name">受身形</div>
+              <div class="conj-form-desc">Passive form</div>
+            </div>
+          </div>
+          
+          <!-- Active Drill -->
+          <div id="conj-drill" class="conj-drill hidden">
+            <div class="conj-stats">
+              <span id="conj-progress">1 / 10</span>
+              <span id="conj-accuracy">Accuracy: 0%</span>
+            </div>
+            
+            <div class="conj-card">
+              <div class="conj-prompt">
+                <div class="conj-verb" id="conj-verb">食べる</div>
+                <div class="conj-arrow">→</div>
+                <div class="conj-target" id="conj-target">て形</div>
+              </div>
+              
+              <div class="conj-input-area">
+                <input type="text" id="conj-answer" class="conj-input" placeholder="Type conjugation..." autocomplete="off">
+                <button class="btn btn-primary" id="conj-submit">Check</button>
+              </div>
+              
+              <div class="conj-feedback hidden" id="conj-feedback">
+                <div class="conj-result" id="conj-result"></div>
+                <div class="conj-correct-answer" id="conj-correct-answer"></div>
+                <div class="conj-explanation" id="conj-explanation"></div>
+              </div>
+            </div>
+            
+            <div class="conj-actions">
+              <button class="btn btn-secondary" id="conj-hint">Hint</button>
+              <button class="btn btn-secondary" id="conj-skip">Skip</button>
+              <button class="btn btn-accent hidden" id="conj-next">Next →</button>
+            </div>
+          </div>
+          
+          <!-- Drill Results -->
+          <div id="conj-results" class="conj-results hidden">
+            <div class="conj-result-header">
+              <h3>Session Complete! 🎉</h3>
+              <div class="conj-final-score" id="conj-final-score">8/10 (80%)</div>
+            </div>
+            <div class="conj-result-stats">
+              <div class="conj-stat">
+                <span class="conj-stat-value" id="conj-correct-count">8</span>
+                <span class="conj-stat-label">Correct</span>
+              </div>
+              <div class="conj-stat">
+                <span class="conj-stat-value" id="conj-wrong-count">2</span>
+                <span class="conj-stat-label">Incorrect</span>
+              </div>
+              <div class="conj-stat">
+                <span class="conj-stat-value" id="conj-streak-final">5</span>
+                <span class="conj-stat-label">Best Streak</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="conj-restart">Practice Again</button>
           </div>
         </div>
 

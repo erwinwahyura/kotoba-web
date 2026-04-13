@@ -8,7 +8,12 @@ A clean, minimalist web app for the Kotoba API. Designed with Japanese aesthetic
 
 - **Daily Vocabulary** — JLPT N5→N1 words with furigana tap-to-reveal
 - **Grammar Patterns** — Full pedagogy: conjugation rules, examples, nuance, common mistakes, related patterns
-- **Progress Tracking** — Streaks, level progress, mastered content
+- **Conjugation Drill** — Practice verb/adjective forms (て形, ない形, た形, 丁寧形, 可能形, 受身形, etc.)
+- **SRS Review** — Spaced repetition with SM-2 algorithm (Again/Hard/Good/Easy ratings)
+- **Pattern Comparison** — Side-by-side grammar pattern comparison
+- **JLPT Mock Tests** — Timed practice exams with scoring
+- **TTS Audio** — Tap words/examples to hear pronunciation
+- **Progress Tracking** — Streaks, level progress, mastered content (vocab + grammar)
 - **Responsive** — Works on mobile, tablet, desktop
 - **PWA Ready** — Install to homescreen for app-like experience
 

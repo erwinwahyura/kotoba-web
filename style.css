@@ -651,6 +651,21 @@ h1, h2, h3 {
 .progress-fill.n2 { background: var(--n2); }
 .progress-fill.n1 { background: var(--n1); }
 
+/* Progress Section Headers */
+.progress-section-header {
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.progress-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* Loading */
 #loading-overlay {
   position: fixed;
@@ -1351,4 +1366,217 @@ h1, h2, h3 {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+/* Conjugation Drill Styles */
+.conjugation-streak {
+  font-size: 0.875rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.conj-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.conj-form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.conj-form-card:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+  transform: translateY(-2px);
+}
+
+.conj-form-name {
+  font-family: var(--font-jp);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: var(--space-xs);
+}
+
+.conj-form-desc {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.conj-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin-bottom: var(--space-md);
+}
+
+.conj-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.conj-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+.conj-verb {
+  font-family: var(--font-jp);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.conj-arrow {
+  font-size: 1.5rem;
+  color: var(--text-3);
+}
+
+.conj-target {
+  font-family: var(--font-jp);
+  font-size: 1.5rem;
+  color: var(--accent);
+  font-weight: 600;
+  background: var(--bg);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  border: 2px solid var(--accent);
+}
+
+.conj-input-area {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.conj-input {
+  flex: 1;
+  padding: var(--space-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-jp);
+  font-size: 1.25rem;
+  text-align: center;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.conj-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.conj-input.correct {
+  border-color: var(--success);
+  background: #f0fff4;
+}
+
+.conj-input.incorrect {
+  border-color: #e74c3c;
+  background: #fff5f5;
+}
+
+.conj-feedback {
+  text-align: center;
+  padding: var(--space-lg);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-lg);
+}
+
+.conj-feedback.correct {
+  background: #f0fff4;
+  border: 1px solid var(--success);
+}
+
+.conj-feedback.incorrect {
+  background: #fff5f5;
+  border: 1px solid #e74c3c;
+}
+
+.conj-result {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+
+.conj-result.correct {
+  color: var(--success);
+}
+
+.conj-result.incorrect {
+  color: #e74c3c;
+}
+
+.conj-correct-answer {
+  font-family: var(--font-jp);
+  font-size: 1.5rem;
+  color: var(--text);
+  margin-bottom: var(--space-sm);
+}
+
+.conj-explanation {
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+.conj-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+.conj-results {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+}
+
+.conj-result-header {
+  margin-bottom: var(--space-xl);
+}
+
+.conj-result-header h3 {
+  margin-bottom: var(--space-md);
+}
+
+.conj-final-score {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.conj-result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+  margin: var(--space-xl) 0;
+}
+
+.conj-stat {
+  background: var(--surface);
+  padding: var(--space-lg);
+  border-radius: var(--radius);
+}
+
+.conj-stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: var(--space-xs);
 }
