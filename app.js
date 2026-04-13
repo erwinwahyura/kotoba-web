@@ -194,6 +194,10 @@ function switchView(view) {
     document.getElementById('conj-drill')?.classList.add('hidden');
     document.getElementById('conj-results')?.classList.add('hidden');
   }
+  if (view === 'search') {
+    // Search - no auto-load, wait for user input
+    document.getElementById('search-input')?.focus();
+  }
   if (view === 'progress') loadProgress();
 }
 
@@ -1477,6 +1481,167 @@ async function finishTest() {
     hideLoading();
   }
 }
+
+// ==================== SEARCH FUNCTION ====================
+
+let currentSearchType = 'vocab';
+let searchDebounceTimer = null;
+
+function setupSearchActions() {
+  // Tab switching
+  document.querySelectorAll('.search-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentSearchType = tab.dataset.search;
+      
+      // Clear and refocus
+      const input = document.getElementById('search-input');
+      input.value = '';
+      input.placeholder = currentSearchType === 'vocab' 
+        ? 'Search Japanese, reading, or meaning...'
+        : 'Search grammar pattern or meaning...';
+      input.focus();
+      
+      // Clear results
+      document.getElementById('search-results').innerHTML = 
+        '<div class="search-empty">Type to search ' + (currentSearchType === 'vocab' ? 'vocabulary' : 'grammar patterns') + '</div>';
+    });
+  });
+  
+  // Search input with debounce
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchDebounceTimer);
+      const query = e.target.value.trim();
+      
+      if (query.length < 2) {
+        document.getElementById('search-results').innerHTML = 
+          '<div class="search-empty">Type at least 2 characters to search</div>';
+        return;
+      }
+      
+      searchDebounceTimer = setTimeout(() => {
+        performSearch(query);
+      }, 300);
+    });
+    
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        clearTimeout(searchDebounceTimer);
+        performSearch(e.target.value.trim());
+      }
+    });
+  }
+  
+  // Search button
+  document.getElementById('search-btn')?.addEventListener('click', () => {
+    const query = document.getElementById('search-input').value.trim();
+    if (query) performSearch(query);
+  });
+  
+  // Level filter
+  document.getElementById('search-level')?.addEventListener('change', () => {
+    const query = document.getElementById('search-input').value.trim();
+    if (query.length >= 2) performSearch(query);
+  });
+}
+
+async function performSearch(query) {
+  if (query.length < 2) return;
+  
+  showLoading();
+  
+  try {
+    const level = document.getElementById('search-level')?.value || '';
+    const endpoint = currentSearchType === 'vocab' 
+      ? `/vocab/search?q=${encodeURIComponent(query)}${level ? '&level=' + level : ''}`
+      : `/grammar/search?q=${encodeURIComponent(query)}${level ? '&level=' + level : ''}`;
+    
+    const data = await apiRequest(endpoint);
+    const results = data.data || [];
+    
+    renderSearchResults(results);
+  } catch (error) {
+    console.error('Search failed:', error);
+    document.getElementById('search-results').innerHTML = 
+      '<div class="search-empty">Search failed. Please try again.</div>';
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderSearchResults(results) {
+  const container = document.getElementById('search-results');
+  
+  if (results.length === 0) {
+    container.innerHTML = '<div class="search-empty">No results found</div>';
+    return;
+  }
+  
+  if (currentSearchType === 'vocab') {
+    container.innerHTML = results.map(item => `
+      <div class="search-result-item" onclick="loadVocabDetail('${item.id}')">
+        <div class="search-result-header">
+          <span class="search-result-word">${item.word}</span>
+          <span class="level-badge ${item.jlpt_level.toLowerCase()}">${item.jlpt_level}</span>
+        </div>
+        <div class="search-result-reading">${item.reading}</div>
+        <div class="search-result-meaning">${item.short_meaning}</div>
+      </div>
+    `).join('');
+  } else {
+    container.innerHTML = results.map(item => `
+      <div class="search-result-item" onclick="loadGrammarDetail('${item.id}')">
+        <div class="search-result-header">
+          <span class="level-badge ${item.jlpt_level.toLowerCase()}">${item.jlpt_level}</span>
+        </div>
+        <div class="search-result-pattern">${item.pattern}</div>
+        <div class="search-result-meaning">${item.meaning}</div>
+      </div>
+    `).join('');
+  }
+}
+
+async function loadVocabDetail(id) {
+  showLoading();
+  try {
+    const data = await apiRequest(`/vocab/${id}`);
+    currentWord = data.data;
+    
+    // Switch to vocab view and display
+    switchView('vocab');
+    displayWord(currentWord, {});
+  } catch (error) {
+    console.error('Failed to load vocab detail:', error);
+    showError('Failed to load word details');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function loadGrammarDetail(id) {
+  showLoading();
+  try {
+    const data = await apiRequest(`/grammar/${id}`);
+    currentGrammar = data.data;
+    
+    // Switch to grammar view and display
+    switchView('grammar');
+    displayGrammar(currentGrammar, {});
+  } catch (error) {
+    console.error('Failed to load grammar detail:', error);
+    showError('Failed to load pattern details');
+  } finally {
+    hideLoading();
+  }
+}
+
+// Initialize search on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  setupSearchActions();
+});
 
 // Service Worker for PWA
 if ('serviceWorker' in navigator) {

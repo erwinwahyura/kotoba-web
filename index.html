@@ -100,6 +100,10 @@
             <span class="nav-icon">試</span>
             <span class="nav-label">Tests</span>
           </button>
+          <button class="nav-btn" data-view="search">
+            <span class="nav-icon">検</span>
+            <span class="nav-label">Search</span>
+          </button>
           <button class="nav-btn" data-view="progress">
             <span class="nav-icon">進</span>
             <span class="nav-label">Progress</span>
@@ -482,6 +486,40 @@
             <div class="compare-section">
               <h4>Common Errors</h4>
               <div id="compare-errors" class="compare-errors"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search View -->
+        <div id="search-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Search</span>
+          </div>
+          
+          <div class="search-container">
+            <div class="search-tabs">
+              <button class="search-tab active" data-search="vocab">Vocabulary</button>
+              <button class="search-tab" data-search="grammar">Grammar</button>
+            </div>
+            
+            <div class="search-box">
+              <input type="text" id="search-input" class="search-input" placeholder="Search Japanese, reading, or meaning..." autocomplete="off">
+              <button class="btn btn-primary" id="search-btn">Search</button>
+            </div>
+            
+            <div class="search-filters">
+              <select id="search-level" class="search-select">
+                <option value="">All Levels</option>
+                <option value="N5">N5</option>
+                <option value="N4">N4</option>
+                <option value="N3">N3</option>
+                <option value="N2">N2</option>
+                <option value="N1">N1</option>
+              </select>
+            </div>
+            
+            <div id="search-results" class="search-results">
+              <div class="search-empty">Type to search vocabulary or grammar patterns</div>
             </div>
           </div>
         </div>
