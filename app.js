@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupJLPTActions();
   setupConjugationActions();
   setupSearchActions();
+  setupKanjiActions();
+  setupReadingActions();
+  setupWeakPointsActions();
   
   if (token) {
     // Validate token by making a test request
@@ -198,6 +201,17 @@ function switchView(view) {
   if (view === 'search') {
     // Search - no auto-load, wait for user input
     document.getElementById('search-input')?.focus();
+  }
+  if (view === 'kanji') {
+    // Kanji - show selection grid
+    document.getElementById('kanji-select')?.classList.remove('hidden');
+    document.getElementById('kanji-practice')?.classList.add('hidden');
+  }
+  if (view === 'reading') {
+    // Reading - show level selection
+    document.getElementById('reading-levels')?.classList.remove('hidden');
+    document.getElementById('reading-article')?.classList.add('hidden');
+    document.getElementById('reading-results')?.classList.add('hidden');
   }
   if (view === 'progress') loadProgress();
 }
@@ -1654,6 +1668,490 @@ async function loadGrammarDetail(id) {
   } catch (error) {
     console.error('Failed to load grammar detail:', error);
     showError('Failed to load pattern details');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ==================== KANJI WRITING ====================
+
+let currentKanji = null;
+let currentKanjiStroke = 0;
+let kanjiCanvas = null;
+let kanjiCtx = null;
+let isDrawing = false;
+let currentStrokePath = [];
+let kanjiStrokes = [];
+
+function setupKanjiActions() {
+  // Kanji selection cards
+  document.querySelectorAll('.kanji-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const kanji = card.dataset.kanji;
+      startKanjiPractice(kanji);
+    });
+  });
+  
+  // Back button
+  document.getElementById('kanji-back')?.addEventListener('click', () => {
+    document.getElementById('kanji-practice').classList.add('hidden');
+    document.getElementById('kanji-select').classList.remove('hidden');
+    stopKanjiPractice();
+  });
+  
+  // Canvas drawing
+  const canvas = document.getElementById('kanji-canvas');
+  if (canvas) {
+    kanjiCanvas = canvas;
+    kanjiCtx = canvas.getContext('2d');
+    
+    // Mouse events
+    canvas.addEventListener('mousedown', startKanjiDraw);
+    canvas.addEventListener('mousemove', drawKanji);
+    canvas.addEventListener('mouseup', endKanjiDraw);
+    canvas.addEventListener('mouseleave', endKanjiDraw);
+    
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startKanjiDraw(e.touches[0]);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      drawKanji(e.touches[0]);
+    });
+    canvas.addEventListener('touchend', endKanjiDraw);
+  }
+  
+  // Controls
+  document.getElementById('kanji-hint')?.addEventListener('click', showKanjiHint);
+  document.getElementById('kanji-clear')?.addEventListener('click', clearKanjiCanvas);
+  document.getElementById('kanji-check')?.addEventListener('click', checkKanjiStroke);
+  document.getElementById('kanji-next-stroke')?.addEventListener('click', nextKanjiStroke);
+}
+
+function startKanjiPractice(kanji) {
+  currentKanji = kanji;
+  currentKanjiStroke = 0;
+  kanjiStrokes = [];
+  
+  // Update display
+  document.getElementById('practice-kanji').textContent = kanji;
+  document.getElementById('kanji-meaning').textContent = 'Loading...';
+  document.getElementById('kanji-readings').textContent = '';
+  
+  // Show practice view
+  document.getElementById('kanji-select').classList.add('hidden');
+  document.getElementById('kanji-practice').classList.remove('hidden');
+  document.getElementById('kanji-feedback').classList.add('hidden');
+  document.getElementById('kanji-next-stroke').classList.add('hidden');
+  
+  // Clear canvas
+  clearKanjiCanvas();
+  
+  // Load kanji data from API (mock for now)
+  loadKanjiData(kanji);
+}
+
+async function loadKanjiData(kanji) {
+  // Mock data - in production, fetch from /api/kanji/:char
+  const kanjiData = {
+    '日': { meaning: 'Sun, day', readings: 'にち、ひ、か', strokes: 4 },
+    '月': { meaning: 'Moon, month', readings: 'げつ、つき', strokes: 4 },
+    '火': { meaning: 'Fire', readings: 'か、ひ', strokes: 4 },
+    '水': { meaning: 'Water', readings: 'すい、みず', strokes: 4 },
+    '木': { meaning: 'Tree, wood', readings: 'もく、き', strokes: 4 },
+    '金': { meaning: 'Gold, metal, money', readings: 'きん、かね', strokes: 8 }
+  };
+  
+  const data = kanjiData[kanji] || { meaning: 'Unknown', readings: '', strokes: 4 };
+  
+  document.getElementById('kanji-meaning').textContent = data.meaning;
+  document.getElementById('kanji-readings').textContent = data.readings;
+  document.getElementById('kanji-total-strokes').textContent = data.strokes;
+  document.getElementById('kanji-stroke-num').textContent = '1';
+}
+
+function startKanjiDraw(e) {
+  if (!kanjiCtx) return;
+  
+  isDrawing = true;
+  const rect = kanjiCanvas.getBoundingClientRect();
+  const x = (e.clientX || e.pageX) - rect.left;
+  const y = (e.clientY || e.pageY) - rect.top;
+  
+  currentStrokePath = [{ x, y }];
+  
+  kanjiCtx.beginPath();
+  kanjiCtx.moveTo(x, y);
+  kanjiCtx.strokeStyle = '#1a1a1a';
+  kanjiCtx.lineWidth = 3;
+  kanjiCtx.lineCap = 'round';
+  kanjiCtx.lineJoin = 'round';
+}
+
+function drawKanji(e) {
+  if (!isDrawing || !kanjiCtx) return;
+  
+  const rect = kanjiCanvas.getBoundingClientRect();
+  const x = (e.clientX || e.pageX) - rect.left;
+  const y = (e.clientY || e.pageY) - rect.top;
+  
+  currentStrokePath.push({ x, y });
+  
+  kanjiCtx.lineTo(x, y);
+  kanjiCtx.stroke();
+}
+
+function endKanjiDraw() {
+  if (!isDrawing) return;
+  
+  isDrawing = false;
+  if (currentStrokePath.length > 1) {
+    kanjiStrokes.push([...currentStrokePath]);
+  }
+}
+
+function clearKanjiCanvas() {
+  if (!kanjiCtx || !kanjiCanvas) return;
+  
+  kanjiCtx.clearRect(0, 0, kanjiCanvas.width, kanjiCanvas.height);
+  kanjiStrokes = [];
+  currentStrokePath = [];
+}
+
+function showKanjiHint() {
+  // Show reference outline (simplified - just show grid)
+  if (!kanjiCtx || !kanjiCanvas) return;
+  
+  // Draw grid lines
+  kanjiCtx.strokeStyle = '#e8e8e8';
+  kanjiCtx.lineWidth = 1;
+  
+  const w = kanjiCanvas.width;
+  const h = kanjiCanvas.height;
+  const midX = w / 2;
+  const midY = h / 2;
+  
+  // Vertical and horizontal center lines
+  kanjiCtx.beginPath();
+  kanjiCtx.moveTo(midX, 0);
+  kanjiCtx.lineTo(midX, h);
+  kanjiCtx.moveTo(0, midY);
+  kanjiCtx.lineTo(w, midY);
+  kanjiCtx.stroke();
+  
+  // Diagonal lines
+  kanjiCtx.beginPath();
+  kanjiCtx.moveTo(0, 0);
+  kanjiCtx.lineTo(w, h);
+  kanjiCtx.moveTo(w, 0);
+  kanjiCtx.lineTo(0, h);
+  kanjiCtx.stroke();
+}
+
+function checkKanjiStroke() {
+  // Simplified stroke validation
+  if (kanjiStrokes.length === 0) {
+    showError('Please draw a stroke first');
+    return;
+  }
+  
+  // Mock accuracy calculation
+  const accuracy = Math.floor(70 + Math.random() * 25); // 70-95%
+  
+  const feedback = document.getElementById('kanji-feedback');
+  const accuracyEl = document.getElementById('kanji-accuracy');
+  const messageEl = document.getElementById('kanji-message');
+  
+  feedback.classList.remove('hidden');
+  accuracyEl.textContent = accuracy + '%';
+  
+  if (accuracy >= 85) {
+    accuracyEl.style.color = 'var(--success)';
+    messageEl.textContent = 'Excellent! Great stroke.';
+    document.getElementById('kanji-next-stroke').classList.remove('hidden');
+  } else if (accuracy >= 70) {
+    accuracyEl.style.color = 'var(--accent)';
+    messageEl.textContent = 'Good! Try to make the lines straighter.';
+    document.getElementById('kanji-next-stroke').classList.remove('hidden');
+  } else {
+    accuracyEl.style.color = '#e74c3c';
+    messageEl.textContent = 'Keep practicing! Watch the stroke direction.';
+  }
+}
+
+function nextKanjiStroke() {
+  currentKanjiStroke++;
+  const totalStrokes = parseInt(document.getElementById('kanji-total-strokes').textContent);
+  
+  if (currentKanjiStroke >= totalStrokes) {
+    // Completed all strokes
+    document.getElementById('kanji-message').textContent = 'Kanji complete! 🎉';
+    document.getElementById('kanji-next-stroke').classList.add('hidden');
+    currentKanjiStroke = 0;
+  } else {
+    // Next stroke
+    document.getElementById('kanji-stroke-num').textContent = currentKanjiStroke + 1;
+    document.getElementById('kanji-feedback').classList.add('hidden');
+    document.getElementById('kanji-next-stroke').classList.add('hidden');
+    clearKanjiCanvas();
+  }
+}
+
+function stopKanjiPractice() {
+  isDrawing = false;
+  currentKanji = null;
+  currentKanjiStroke = 0;
+  kanjiStrokes = [];
+}
+
+// ==================== READING COMPREHENSION ====================
+
+let currentReadingLevel = 'N3';
+let currentArticle = null;
+let readingAnswers = {};
+let readingTimerInterval = null;
+let readingStartTime = null;
+
+function setupReadingActions() {
+  // Level selection
+  document.querySelectorAll('.reading-level-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const level = card.dataset.level;
+      startReadingArticle(level);
+    });
+  });
+  
+  // Back button
+  document.getElementById('reading-back')?.addEventListener('click', () => {
+    document.getElementById('reading-article').classList.add('hidden');
+    document.getElementById('reading-results').classList.add('hidden');
+    document.getElementById('reading-levels').classList.remove('hidden');
+    stopReadingTimer();
+  });
+  
+  // Submit answers
+  document.getElementById('reading-submit')?.addEventListener('click', submitReadingAnswers);
+  
+  // Next article
+  document.getElementById('reading-next')?.addEventListener('click', () => {
+    document.getElementById('reading-results').classList.add('hidden');
+    startReadingArticle(currentReadingLevel);
+  });
+}
+
+async function startReadingArticle(level) {
+  currentReadingLevel = level;
+  readingAnswers = {};
+  
+  showLoading();
+  
+  try {
+    // Mock article - in production, fetch from /api/reading/:level
+    const article = getMockArticle(level);
+    currentArticle = article;
+    
+    // Hide levels, show article
+    document.getElementById('reading-levels').classList.add('hidden');
+    document.getElementById('reading-article').classList.remove('hidden');
+    document.getElementById('reading-results').classList.add('hidden');
+    
+    // Display article
+    document.getElementById('article-title').textContent = article.title;
+    
+    // Make text clickable for word lookup
+    const textHtml = article.text.split(/(\s+)/).map(word => {
+      if (word.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/)) {
+        return `<span class="word" onclick="lookupWord('${word}')">${word}</span>`;
+      }
+      return word;
+    }).join('');
+    
+    document.getElementById('article-text').innerHTML = textHtml;
+    
+    // Display questions
+    const questionsContainer = document.getElementById('reading-questions');
+    questionsContainer.innerHTML = article.questions.map((q, idx) => `
+      <div class="reading-question">
+        <div class="reading-question-text">${idx + 1}. ${q.question}</div>
+        <div class="reading-options">
+          ${q.options.map((opt, optIdx) => `
+            <div class="reading-option" data-question="${idx}" data-option="${optIdx}" onclick="selectReadingAnswer(${idx}, ${optIdx})">
+              ${String.fromCharCode(65 + optIdx)}. ${opt}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+    
+    // Start timer
+    startReadingTimer();
+    readingStartTime = Date.now();
+    
+  } catch (error) {
+    console.error('Failed to load reading article:', error);
+    showError('Failed to load article');
+  } finally {
+    hideLoading();
+  }
+}
+
+function getMockArticle(level) {
+  const articles = {
+    'N3': {
+      title: '日本の四季',
+      text: '日本には四季があります。春は桜が咲きます。夏は暑くて、花火大会があります。秋は紅葉が美しいです。冬は寒くて、雪が降ります。',
+      questions: [
+        {
+          question: '日本の春には何が咲きますか？',
+          options: ['桜', '紅葉', '雪', '花火'],
+          correct: 0
+        },
+        {
+          question: '夏に何がありますか？',
+          options: ['雪', '花火大会', '紅葉', '桜'],
+          correct: 1
+        },
+        {
+          question: '秋はどうですか？',
+          options: ['暑い', '寒い', '美しい', '咲く'],
+          correct: 2
+        }
+      ]
+    },
+    'N2': {
+      title: '働き方改革',
+      text: '日本政府は働き方改革を進めています。残業時間を減らし、有給休暇を取りやすくする政策を実施しています。これにより、ワークライフバランスが改善されることが期待されています。',
+      questions: [
+        {
+          question: '働き方改革の目的は何ですか？',
+          options: ['残業を増やす', 'ワークライフバランスの改善', '給料を下げる', '休暇を減らす'],
+          correct: 1
+        },
+        {
+          question: '政府は何を実施していますか？',
+          options: ['残業時間を増やす政策', '有給休暇を取りにくくする政策', '残業時間を減らす政策', '給料を下げる政策'],
+          correct: 2
+        }
+      ]
+    }
+  };
+  
+  return articles[level] || articles['N3'];
+}
+
+function lookupWord(word) {
+  // In production, show popup with definition and add to SRS
+  alert(`Word: ${word}\n\nClick to add to vocabulary list (feature coming soon)`);
+}
+
+function selectReadingAnswer(questionIdx, optionIdx) {
+  readingAnswers[questionIdx] = optionIdx;
+  
+  // Update UI
+  document.querySelectorAll(`.reading-option[data-question="${questionIdx}"]`).forEach(opt => {
+    opt.classList.remove('selected');
+  });
+  document.querySelector(`.reading-option[data-question="${questionIdx}"][data-option="${optionIdx}"]`).classList.add('selected');
+}
+
+function startReadingTimer() {
+  let seconds = 600; // 10 minutes for N3
+  if (currentReadingLevel === 'N2') seconds = 900; // 15 minutes for N2
+  
+  updateReadingTimer(seconds);
+  
+  readingTimerInterval = setInterval(() => {
+    seconds--;
+    updateReadingTimer(seconds);
+    
+    if (seconds <= 0) {
+      clearInterval(readingTimerInterval);
+      submitReadingAnswers();
+    }
+  }, 1000);
+}
+
+function updateReadingTimer(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  document.getElementById('reading-timer').textContent = 
+    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function stopReadingTimer() {
+  if (readingTimerInterval) {
+    clearInterval(readingTimerInterval);
+    readingTimerInterval = null;
+  }
+}
+
+function submitReadingAnswers() {
+  stopReadingTimer();
+  
+  const questions = currentArticle.questions;
+  let correct = 0;
+  
+  questions.forEach((q, idx) => {
+    if (readingAnswers[idx] === q.correct) {
+      correct++;
+    }
+  });
+  
+  const score = Math.round((correct / questions.length) * 100);
+  
+  // Show results
+  document.getElementById('reading-article').classList.add('hidden');
+  document.getElementById('reading-results').classList.remove('hidden');
+  document.getElementById('reading-score').textContent = 
+    `${correct}/${questions.length} (${score}%)`;
+  
+  // Show review
+  const reviewContainer = document.getElementById('reading-review');
+  reviewContainer.innerHTML = questions.map((q, idx) => {
+    const userAnswer = readingAnswers[idx];
+    const isCorrect = userAnswer === q.correct;
+    
+    return `
+      <div class="reading-question ${isCorrect ? 'correct' : 'incorrect'}">
+        <div class="reading-question-text">${idx + 1}. ${q.question}</div>
+        <div>Your answer: ${userAnswer !== undefined ? String.fromCharCode(65 + userAnswer) : 'Not answered'}</div>
+        <div>Correct answer: ${String.fromCharCode(65 + q.correct)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== WEAK POINTS DRILL ====================
+
+function setupWeakPointsActions() {
+  // This will be integrated with conjugation and other drills
+  // to auto-generate focused practice sessions
+}
+
+async function startWeakPointsDrill() {
+  // Analyze user's performance data
+  // Find lowest accuracy areas
+  // Generate targeted drill
+  showLoading();
+  
+  try {
+    // Fetch user's accuracy stats from backend
+    // const stats = await apiRequest('/drill/weak-points');
+    
+    // For now, show mock weak points
+    const weakPoints = [
+      { form: '受身形', accuracy: 45, count: 20 },
+      { form: '使役形', accuracy: 52, count: 15 },
+      { form: '意向形', accuracy: 60, count: 12 }
+    ];
+    
+    // Could show a modal or dedicated view with weak points
+    // and button to start focused drill
+    
+  } catch (error) {
+    console.error('Failed to load weak points:', error);
   } finally {
     hideLoading();
   }

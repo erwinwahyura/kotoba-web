@@ -1717,3 +1717,297 @@ h1, h2, h3 {
   color: var(--accent);
   margin-bottom: var(--space-xs);
 }
+
+/* Kanji Writing Styles */
+.kanji-level {
+  font-size: 0.875rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.kanji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.kanji-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kanji-card:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+  transform: translateY(-2px);
+}
+
+.kanji-char {
+  font-family: var(--font-jp);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.kanji-info {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.kanji-practice {
+  padding: var(--space-lg);
+}
+
+.kanji-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.kanji-meta {
+  flex: 1;
+  text-align: center;
+}
+
+.kanji-display {
+  font-family: var(--font-jp);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+}
+
+.kanji-meaning {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  display: block;
+  margin-top: var(--space-xs);
+}
+
+.kanji-readings {
+  font-family: var(--font-jp);
+  font-size: 0.875rem;
+  color: var(--text-3);
+  display: block;
+  margin-top: var(--space-xs);
+}
+
+.kanji-canvas-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto var(--space-lg);
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+#kanji-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.kanji-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.kanji-controls {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.kanji-feedback {
+  text-align: center;
+  padding: var(--space-lg);
+  background: var(--surface);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-lg);
+}
+
+.kanji-accuracy {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: var(--space-sm);
+}
+
+.kanji-message {
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+.kanji-progress {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+/* Reading Comprehension Styles */
+.reading-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.reading-level-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reading-level-card:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+  transform: translateY(-2px);
+}
+
+.reading-level-badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+
+.reading-level-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.reading-level-desc {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.reading-article {
+  padding: var(--space-lg);
+}
+
+.reading-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.reading-timer {
+  font-family: monospace;
+  font-size: 1.125rem;
+  color: var(--text-2);
+}
+
+.reading-content {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.reading-content h3 {
+  margin-bottom: var(--space-md);
+  color: var(--text);
+}
+
+.article-text {
+  font-family: var(--font-jp);
+  font-size: 1.125rem;
+  line-height: 2;
+  color: var(--text);
+}
+
+.article-text .word {
+  cursor: pointer;
+  border-bottom: 1px dotted var(--accent);
+  transition: background 0.2s ease;
+}
+
+.article-text .word:hover {
+  background: rgba(44, 90, 160, 0.1);
+}
+
+.reading-questions {
+  margin-bottom: var(--space-lg);
+}
+
+.reading-question {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.reading-question-text {
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+}
+
+.reading-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.reading-option {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reading-option:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+.reading-option.selected {
+  border-color: var(--accent);
+  background: rgba(44, 90, 160, 0.1);
+}
+
+.reading-option.correct {
+  border-color: var(--success);
+  background: rgba(39, 174, 96, 0.1);
+}
+
+.reading-option.incorrect {
+  border-color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.reading-results {
+  text-align: center;
+  padding: var(--space-2xl);
+}
+
+.reading-score {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: var(--space-md) 0;
+}

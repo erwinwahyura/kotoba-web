@@ -104,6 +104,14 @@
             <span class="nav-icon">検</span>
             <span class="nav-label">Search</span>
           </button>
+          <button class="nav-btn" data-view="kanji">
+            <span class="nav-icon">漢</span>
+            <span class="nav-label">Kanji</span>
+          </button>
+          <button class="nav-btn" data-view="reading">
+            <span class="nav-icon">読</span>
+            <span class="nav-label">Read</span>
+          </button>
           <button class="nav-btn" data-view="progress">
             <span class="nav-icon">進</span>
             <span class="nav-label">Progress</span>
@@ -521,6 +529,132 @@
             <div id="search-results" class="search-results">
               <div class="search-empty">Type to search vocabulary or grammar patterns</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Kanji Writing View -->
+        <div id="kanji-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Kanji Practice</span>
+            <span class="kanji-level" id="kanji-current-level">N5</span>
+          </div>
+          
+          <!-- Kanji Selection -->
+          <div id="kanji-select" class="kanji-grid">
+            <div class="kanji-card" data-kanji="日">
+              <div class="kanji-char">日</div>
+              <div class="kanji-info">4 strokes</div>
+            </div>
+            <div class="kanji-card" data-kanji="月">
+              <div class="kanji-char">月</div>
+              <div class="kanji-info">4 strokes</div>
+            </div>
+            <div class="kanji-card" data-kanji="火">
+              <div class="kanji-char">火</div>
+              <div class="kanji-info">4 strokes</div>
+            </div>
+            <div class="kanji-card" data-kanji="水">
+              <div class="kanji-char">水</div>
+              <div class="kanji-info">4 strokes</div>
+            </div>
+            <div class="kanji-card" data-kanji="木">
+              <div class="kanji-char">木</div>
+              <div class="kanji-info">4 strokes</div>
+            </div>
+            <div class="kanji-card" data-kanji="金">
+              <div class="kanji-char">金</div>
+              <div class="kanji-info">8 strokes</div>
+            </div>
+          </div>
+          
+          <!-- Kanji Practice -->
+          <div id="kanji-practice" class="kanji-practice hidden">
+            <div class="kanji-header">
+              <button class="btn btn-secondary btn-sm" id="kanji-back">← Back</button>
+              <div class="kanji-meta">
+                <span class="kanji-display" id="practice-kanji">日</span>
+                <span class="kanji-meaning" id="kanji-meaning">Sun, day</span>
+                <span class="kanji-readings" id="kanji-readings">にち、ひ、か</span>
+              </div>
+            </div>
+            
+            <div class="kanji-canvas-container">
+              <canvas id="kanji-canvas" width="300" height="300"></canvas>
+              <div class="kanji-overlay" id="kanji-overlay"></div>
+            </div>
+            
+            <div class="kanji-controls">
+              <button class="btn btn-secondary" id="kanji-hint">Show Outline</button>
+              <button class="btn btn-secondary" id="kanji-clear">Clear</button>
+              <button class="btn btn-primary" id="kanji-check">Check</button>
+              <button class="btn btn-accent hidden" id="kanji-next-stroke">Next Stroke →</button>
+            </div>
+            
+            <div class="kanji-feedback hidden" id="kanji-feedback">
+              <div class="kanji-accuracy" id="kanji-accuracy">85%</div>
+              <div class="kanji-message" id="kanji-message">Good! Try to make the lines straighter.</div>
+            </div>
+            
+            <div class="kanji-progress">
+              <span id="kanji-stroke-num">1</span> / <span id="kanji-total-strokes">4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reading Comprehension View -->
+        <div id="reading-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Reading Practice</span>
+            <span class="reading-level" id="reading-current-level">N3</span>
+          </div>
+          
+          <!-- Reading Level Selection -->
+          <div id="reading-levels" class="reading-levels">
+            <div class="reading-level-card" data-level="N3">
+              <div class="reading-level-badge n3">N3</div>
+              <div class="reading-level-name">Intermediate</div>
+              <div class="reading-level-desc">Everyday topics, simple essays</div>
+            </div>
+            <div class="reading-level-card" data-level="N2">
+              <div class="reading-level-badge n2">N2</div>
+              <div class="reading-level-name">Advanced</div>
+              <div class="reading-level-desc">Complex texts, newspapers, opinions</div>
+            </div>
+          </div>
+          
+          <!-- Active Reading -->
+          <div id="reading-article" class="reading-article hidden">
+            <div class="reading-header">
+              <button class="btn btn-secondary btn-sm" id="reading-back">← Back</button>
+              <div class="reading-timer">⏱ <span id="reading-timer">10:00</span></div>
+            </div>
+            
+            <div class="reading-content">
+              <h3 id="article-title">日本の四季</h3>
+              <div class="article-text" id="article-text">
+                <!-- Article content with clickable words -->
+              </div>
+            </div>
+            
+            <div class="reading-questions" id="reading-questions">
+              <!-- Multiple choice questions -->
+            </div>
+            
+            <div class="reading-actions">
+              <button class="btn btn-primary" id="reading-submit">Submit Answers</button>
+            </div>
+          </div>
+          
+          <!-- Reading Results -->
+          <div id="reading-results" class="reading-results hidden">
+            <div class="result-header">
+              <h3>Reading Complete!</h3>
+              <div class="reading-score" id="reading-score">3/5 (60%)</div>
+            </div>
+            <div class="reading-review" id="reading-review">
+              <!-- Review incorrect answers -->
+            </div>
+            <button class="btn btn-primary" id="reading-next">Next Article</button>
           </div>
         </div>
 
