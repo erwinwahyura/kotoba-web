@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupComparisonActions();
   setupJLPTActions();
   setupConjugationActions();
+  setupSearchActions();
   
   if (token) {
     // Validate token by making a test request
@@ -1637,11 +1638,6 @@ async function loadGrammarDetail(id) {
     hideLoading();
   }
 }
-
-// Initialize search on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  setupSearchActions();
-});
 
 // Service Worker for PWA
 if ('serviceWorker' in navigator) {
