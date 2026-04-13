@@ -420,8 +420,7 @@ function displayProgress(progressData, statsData) {
   const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
   const currentLevelIndex = levels.indexOf(currentLevel);
   
-  // Get grammar progress data
-  const grammarIndex = progress.current_grammar_index || 0;
+  // Get grammar progress data (already declared above)
   const totalGrammar = progress.total_grammar_in_level || 10;
   
   // Calculate progress per level for both vocab and grammar
@@ -571,28 +570,21 @@ function setupActions() {
   document.getElementById('next-grammar-btn').addEventListener('click', async (e) => {
     e.preventDefault();
     
-    alert('GRAMMAR: Button clicked!');
     if (!currentGrammar) {
-      alert('GRAMMAR ERROR: No current pattern loaded');
+      showError('No grammar pattern loaded');
       return;
     }
-    
-    alert(`GRAMMAR: Will skip pattern ID: ${currentGrammar.id}`);
     
     showLoading();
     try {
       // Advance to next pattern
-      alert(`GRAMMAR: Calling /grammar/${currentGrammar.id}/skip`);
-      const result = await apiRequest(`/grammar/${currentGrammar.id}/skip`, {
+      await apiRequest(`/grammar/${currentGrammar.id}/skip`, {
         method: 'POST',
         body: JSON.stringify({ status: 'studied' })
       });
       
-      alert(`GRAMMAR: Skip OK! Next pattern: ${result.data?.pattern?.pattern || 'unknown'}`);
       await loadDailyGrammar();
-      alert('GRAMMAR: Done!');
     } catch (error) {
-      alert(`GRAMMAR ERROR: ${error.message}`);
       console.error('Failed to save grammar progress:', error);
       showError('Failed: ' + (error.message || 'Unknown error'));
     } finally {
