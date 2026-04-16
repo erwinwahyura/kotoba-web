@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupKanjiActions();
   setupReadingActions();
   setupWeakPointsActions();
+  setupGoalsActions();
+  
+  // Goals button
+  document.getElementById('goals-btn')?.addEventListener('click', showGoalsModal);
   
   if (token) {
     // Validate token by making a test request
@@ -2207,6 +2211,260 @@ async function startWeakPointsDrill() {
     console.error('Failed to load weak points:', error);
   } finally {
     hideLoading();
+  }
+}
+
+// ==================== GOALS & STREAKS ====================
+
+function setupGoalsActions() {
+  // Close modal
+  document.getElementById('close-goals-modal')?.addEventListener('click', hideGoalsModal);
+  
+  // Save settings
+  document.getElementById('save-goal-settings')?.addEventListener('click', saveGoalSettings);
+  
+  // Close on backdrop click
+  document.getElementById('goals-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'goals-modal') hideGoalsModal();
+  });
+}
+
+function showGoalsModal() {
+  const modal = document.getElementById('goals-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    loadGoalsData();
+  }
+}
+
+function hideGoalsModal() {
+  const modal = document.getElementById('goals-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function loadGoalsData() {
+  showLoading();
+  
+  try {
+    // Load daily progress
+    const progressRes = await apiRequest('/goals/daily');
+    const progress = progressRes.data;
+    
+    // Update streak
+    const streakRes = await apiRequest('/goals/streak');
+    const streak = streakRes.data;
+    
+    // Update achievements
+    const achievementsRes = await apiRequest('/goals/achievements');
+    const achievements = achievementsRes.data;
+    
+    // Update weekly progress
+    const weeklyRes = await apiRequest('/goals/weekly');
+    const weekly = weeklyRes.data;
+    
+    // Render data
+    renderStreak(streak);
+    renderDailyProgress(progress);
+    renderWeeklyProgress(weekly);
+    renderAchievements(achievements);
+    
+    // Load settings
+    const settingsRes = await apiRequest('/goals/settings');
+    const settings = settingsRes.data;
+    renderGoalSettings(settings);
+    
+  } catch (error) {
+    console.error('Failed to load goals data:', error);
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderStreak(streak) {
+  const countEl = document.getElementById('streak-count');
+  if (countEl) countEl.textContent = streak?.current_streak || 0;
+}
+
+function renderDailyProgress(progress) {
+  // Vocab
+  const vocabCompleted = document.getElementById('vocab-completed');
+  const vocabTarget = document.getElementById('vocab-target');
+  const vocabFill = document.getElementById('vocab-goal-fill');
+  
+  if (vocabCompleted) vocabCompleted.textContent = progress?.vocab_completed || 0;
+  if (vocabTarget) vocabTarget.textContent = progress?.vocab_target || 10;
+  if (vocabFill) {
+    const vocabPercent = progress?.vocab_target > 0 
+      ? Math.min(100, (progress.vocab_completed / progress.vocab_target) * 100) 
+      : 0;
+    vocabFill.style.width = vocabPercent + '%';
+    vocabFill.classList.toggle('complete', vocabPercent >= 100);
+  }
+  
+  // Grammar
+  const grammarCompleted = document.getElementById('grammar-completed');
+  const grammarTarget = document.getElementById('grammar-target');
+  const grammarFill = document.getElementById('grammar-goal-fill');
+  
+  if (grammarCompleted) grammarCompleted.textContent = progress?.grammar_completed || 0;
+  if (grammarTarget) grammarTarget.textContent = progress?.grammar_target || 5;
+  if (grammarFill) {
+    const grammarPercent = progress?.grammar_target > 0 
+      ? Math.min(100, (progress.grammar_completed / progress.grammar_target) * 100) 
+      : 0;
+    grammarFill.style.width = grammarPercent + '%';
+    grammarFill.classList.toggle('complete', grammarPercent >= 100);
+  }
+  
+  // Kanji
+  const kanjiCompleted = document.getElementById('kanji-completed');
+  const kanjiTarget = document.getElementById('kanji-target');
+  const kanjiFill = document.getElementById('kanji-goal-fill');
+  
+  if (kanjiCompleted) kanjiCompleted.textContent = progress?.kanji_completed || 0;
+  if (kanjiTarget) kanjiTarget.textContent = progress?.kanji_target || 5;
+  if (kanjiFill) {
+    const kanjiPercent = progress?.kanji_target > 0 
+      ? Math.min(100, (progress.kanji_completed / progress.kanji_target) * 100) 
+      : 0;
+    kanjiFill.style.width = kanjiPercent + '%';
+    kanjiFill.classList.toggle('complete', kanjiPercent >= 100);
+  }
+  
+  // Conjugation
+  const conjCompleted = document.getElementById('conjugation-completed');
+  const conjTarget = document.getElementById('conjugation-target');
+  const conjFill = document.getElementById('conjugation-goal-fill');
+  
+  if (conjCompleted) conjCompleted.textContent = progress?.conjugation_completed || 0;
+  if (conjTarget) conjTarget.textContent = progress?.conjugation_target || 20;
+  if (conjFill) {
+    const conjPercent = progress?.conjugation_target > 0 
+      ? Math.min(100, (progress.conjugation_completed / progress.conjugation_target) * 100) 
+      : 0;
+    conjFill.style.width = conjPercent + '%';
+    conjFill.classList.toggle('complete', conjPercent >= 100);
+  }
+  
+  // Reading
+  const readingCompleted = document.getElementById('reading-completed');
+  const readingTarget = document.getElementById('reading-target');
+  const readingFill = document.getElementById('reading-goal-fill');
+  
+  if (readingCompleted) readingCompleted.textContent = progress?.reading_completed || 0;
+  if (readingTarget) readingTarget.textContent = progress?.reading_target || 1;
+  if (readingFill) {
+    const readingPercent = progress?.reading_target > 0 
+      ? Math.min(100, (progress.reading_completed / progress.reading_target) * 100) 
+      : 0;
+    readingFill.style.width = readingPercent + '%';
+    readingFill.classList.toggle('complete', readingPercent >= 100);
+  }
+}
+
+function renderWeeklyProgress(weekly) {
+  const container = document.getElementById('weekly-heatmap');
+  if (!container || !weekly) return;
+  
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  container.innerHTML = weekly.map((day, idx) => {
+    const dayName = days[new Date(day.date).getDay()] || days[idx];
+    const percent = day.overall_progress || 0;
+    const isCompleted = day.is_completed;
+    const isPartial = percent > 0 && percent < 100;
+    
+    return `
+      <div class="heatmap-day ${isCompleted ? 'completed' : ''} ${isPartial ? 'partial' : ''}">
+        <div class="day-label">${dayName}</div>
+        <div class="day-percent">${percent}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAchievements(achievements) {
+  const container = document.getElementById('achievements-grid');
+  if (!container) return;
+  
+  // Get all achievement definitions
+  apiRequest('/goals/achievements/all').then(res => {
+    const allAchievements = res.data || [];
+    const earnedIds = new Set(achievements.map(a => a.achievement_id || a.id));
+    
+    container.innerHTML = allAchievements.map(ach => {
+      const isEarned = earnedIds.has(ach.id);
+      return `
+        <div class="achievement-item ${isEarned ? 'earned' : 'locked'}">
+          <div class="achievement-icon">${ach.icon || '🏆'}</div>
+          <div class="achievement-name">${ach.name}</div>
+        </div>
+      `;
+    }).join('');
+  }).catch(err => {
+    console.error('Failed to load achievements:', err);
+  });
+}
+
+function renderGoalSettings(settings) {
+  if (!settings) return;
+  
+  const vocabInput = document.getElementById('setting-vocab');
+  const grammarInput = document.getElementById('setting-grammar');
+  const kanjiInput = document.getElementById('setting-kanji');
+  const conjInput = document.getElementById('setting-conjugation');
+  const readingInput = document.getElementById('setting-reading');
+  
+  if (vocabInput) vocabInput.value = settings.vocab_target || 10;
+  if (grammarInput) grammarInput.value = settings.grammar_target || 5;
+  if (kanjiInput) kanjiInput.value = settings.kanji_target || 5;
+  if (conjInput) conjInput.value = settings.conjugation_target || 20;
+  if (readingInput) readingInput.value = settings.reading_target || 1;
+}
+
+async function saveGoalSettings() {
+  const vocabTarget = parseInt(document.getElementById('setting-vocab')?.value || 10);
+  const grammarTarget = parseInt(document.getElementById('setting-grammar')?.value || 5);
+  const kanjiTarget = parseInt(document.getElementById('setting-kanji')?.value || 5);
+  const conjTarget = parseInt(document.getElementById('setting-conjugation')?.value || 20);
+  const readingTarget = parseInt(document.getElementById('setting-reading')?.value || 1);
+  
+  showLoading();
+  
+  try {
+    await apiRequest('/goals/settings', {
+      method: 'PUT',
+      body: JSON.stringify({
+        vocab_target: vocabTarget,
+        grammar_target: grammarTarget,
+        kanji_target: kanjiTarget,
+        conjugation_target: conjTarget,
+        reading_target: readingTarget
+      })
+    });
+    
+    showError('Settings saved!');
+    loadGoalsData(); // Refresh
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    showError('Failed to save settings');
+  } finally {
+    hideLoading();
+  }
+}
+
+// Helper to update progress after activities
+async function recordActivity(activityType, count = 1) {
+  try {
+    await apiRequest('/goals/progress', {
+      method: 'POST',
+      body: JSON.stringify({
+        activity_type: activityType,
+        count: count
+      })
+    });
+  } catch (error) {
+    console.error('Failed to record activity:', error);
   }
 }
 

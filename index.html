@@ -116,6 +116,10 @@
             <span class="nav-icon">進</span>
             <span class="nav-label">Progress</span>
           </button>
+          <button class="nav-btn" id="goals-btn">
+            <span class="nav-icon">🎯</span>
+            <span class="nav-label">Goals</span>
+          </button>
         </nav>
         <div class="header-right">
           <button class="btn-icon" id="logout-btn" title="Logout">→</button>
@@ -696,6 +700,125 @@
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="hidden">
       <div class="spinner"></div>
+    </div>
+  </div>
+
+  <!-- Goals Modal -->
+  <div id="goals-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Daily Goals & Streaks 🔥</h3>
+        <button class="modal-close" id="close-goals-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Streak Display -->
+        <div class="streak-display">
+          <div class="streak-flame">🔥</div>
+          <div class="streak-count" id="streak-count">0</div>
+          <div class="streak-label">day streak</div>
+        </div>
+        
+        <!-- Today's Progress -->
+        <div class="goals-section">
+          <h4>Today's Progress</h4>
+          <div class="goals-grid">
+            <div class="goal-item">
+              <div class="goal-icon">📚</div>
+              <div class="goal-info">
+                <div class="goal-name">Vocabulary</div>
+                <div class="goal-bar">
+                  <div class="goal-fill" id="vocab-goal-fill" style="width: 0%"></div>
+                </div>
+                <div class="goal-text"><span id="vocab-completed">0</span> / <span id="vocab-target">10</span></div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-icon">📝</div>
+              <div class="goal-info">
+                <div class="goal-name">Grammar</div>
+                <div class="goal-bar">
+                  <div class="goal-fill" id="grammar-goal-fill" style="width: 0%"></div>
+                </div>
+                <div class="goal-text"><span id="grammar-completed">0</span> / <span id="grammar-target">5</span></div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-icon">漢</div>
+              <div class="goal-info">
+                <div class="goal-name">Kanji</div>
+                <div class="goal-bar">
+                  <div class="goal-fill" id="kanji-goal-fill" style="width: 0%"></div>
+                </div>
+                <div class="goal-text"><span id="kanji-completed">0</span> / <span id="kanji-target">5</span></div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-icon">活</div>
+              <div class="goal-info">
+                <div class="goal-name">Conjugation</div>
+                <div class="goal-bar">
+                  <div class="goal-fill" id="conjugation-goal-fill" style="width: 0%"></div>
+                </div>
+                <div class="goal-text"><span id="conjugation-completed">0</span> / <span id="conjugation-target">20</span></div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-icon">読</div>
+              <div class="goal-info">
+                <div class="goal-name">Reading</div>
+                <div class="goal-bar">
+                  <div class="goal-fill" id="reading-goal-fill" style="width: 0%"></div>
+                </div>
+                <div class="goal-text"><span id="reading-completed">0</span> / <span id="reading-target">1</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Weekly Heatmap -->
+        <div class="goals-section">
+          <h4>Last 7 Days</h4>
+          <div class="heatmap" id="weekly-heatmap">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+        
+        <!-- Achievements -->
+        <div class="goals-section">
+          <h4>Achievements</h4>
+          <div class="achievements-grid" id="achievements-grid">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+        
+        <!-- Settings -->
+        <div class="goals-section">
+          <h4>Goal Settings</h4>
+          <div class="settings-form">
+            <div class="setting-row">
+              <label>Vocabulary per day</label>
+              <input type="number" id="setting-vocab" min="0" max="100" value="10">
+            </div>
+            <div class="setting-row">
+              <label>Grammar per day</label>
+              <input type="number" id="setting-grammar" min="0" max="50" value="5">
+            </div>
+            <div class="setting-row">
+              <label>Kanji per day</label>
+              <input type="number" id="setting-kanji" min="0" max="50" value="5">
+            </div>
+            <div class="setting-row">
+              <label>Conjugation per day</label>
+              <input type="number" id="setting-conjugation" min="0" max="100" value="20">
+            </div>
+            <div class="setting-row">
+              <label>Reading per day</label>
+              <input type="number" id="setting-reading" min="0" max="10" value="1">
+            </div>
+            <button class="btn btn-primary" id="save-goal-settings">Save Settings</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

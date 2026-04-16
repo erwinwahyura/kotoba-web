@@ -1718,6 +1718,265 @@ h1, h2, h3 {
   margin-bottom: var(--space-xs);
 }
 
+/* Goals Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-lg);
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-2);
+  padding: var(--space-xs);
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+.modal-body {
+  padding: var(--space-lg);
+}
+
+.streak-display {
+  text-align: center;
+  padding: var(--space-xl) 0;
+  margin-bottom: var(--space-lg);
+}
+
+.streak-flame {
+  font-size: 3rem;
+  margin-bottom: var(--space-sm);
+}
+
+.streak-count {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.streak-label {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.goals-section {
+  margin-bottom: var(--space-xl);
+}
+
+.goals-section h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.goals-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.goal-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  text-align: center;
+}
+
+.goal-info {
+  flex: 1;
+}
+
+.goal-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.goal-bar {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.goal-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.goal-fill.complete {
+  background: var(--success);
+}
+
+.goal-text {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+.heatmap {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: space-between;
+}
+
+.heatmap-day {
+  flex: 1;
+  text-align: center;
+  padding: var(--space-md) var(--space-sm);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.heatmap-day.completed {
+  background: rgba(39, 174, 96, 0.2);
+  border: 1px solid var(--success);
+}
+
+.heatmap-day.partial {
+  background: rgba(44, 90, 160, 0.2);
+  border: 1px solid var(--accent);
+}
+
+.heatmap-day .day-label {
+  font-size: 0.625rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  margin-bottom: var(--space-xs);
+}
+
+.heatmap-day .day-percent {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: var(--space-md);
+}
+
+.achievement-item {
+  text-align: center;
+  padding: var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+}
+
+.achievement-item.earned {
+  border-color: var(--accent);
+  background: rgba(44, 90, 160, 0.1);
+}
+
+.achievement-item .achievement-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-xs);
+}
+
+.achievement-item .achievement-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.achievement-item.locked .achievement-icon {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.achievement-item.locked .achievement-name {
+  color: var(--text-3);
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.setting-row label {
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.setting-row input {
+  width: 80px;
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  font-size: 0.875rem;
+}
+
 /* Kanji Writing Styles */
 .kanji-level {
   font-size: 0.875rem;
