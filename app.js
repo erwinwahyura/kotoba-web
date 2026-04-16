@@ -1730,51 +1730,59 @@ function setupKanjiActions() {
   document.getElementById('kanji-next-stroke')?.addEventListener('click', nextKanjiStroke);
 }
 
-function startKanjiPractice(kanji) {
-  currentKanji = kanji;
-  currentKanjiStroke = 0;
-  kanjiStrokes = [];
+async function startKanjiPractice(kanji) {
+  showLoading();
   
-  // Update display
-  document.getElementById('practice-kanji').textContent = kanji;
-  document.getElementById('kanji-meaning').textContent = 'Loading...';
-  document.getElementById('kanji-readings').textContent = '';
-  
-  // Show practice view
-  document.getElementById('kanji-select').classList.add('hidden');
-  document.getElementById('kanji-practice').classList.remove('hidden');
-  document.getElementById('kanji-feedback').classList.add('hidden');
-  document.getElementById('kanji-next-stroke').classList.add('hidden');
-  
-  // Clear canvas
-  clearKanjiCanvas();
-  
-  // Load kanji data from API (mock for now)
-  loadKanjiData(kanji);
+  try {
+    // Get kanji details from API
+    const data = await apiRequest(`/kanji/character/${encodeURIComponent(kanji)}`);
+    const kanjiData = data.data;
+    
+    currentKanji = kanji;
+    currentKanjiStroke = 0;
+    kanjiStrokes = [];
+    
+    // Update display with API data
+    const practiceKanji = document.getElementById('practice-kanji');
+    const kanjiMeaning = document.getElementById('kanji-meaning');
+    const kanjiReadings = document.getElementById('kanji-readings');
+    const kanjiTotalStrokes = document.getElementById('kanji-total-strokes');
+    
+    if (practiceKanji) practiceKanji.textContent = kanji;
+    if (kanjiMeaning) kanjiMeaning.textContent = kanjiData.meaning || 'Loading...';
+    if (kanjiReadings) kanjiReadings.textContent = (kanjiData.readings || []).join('、') || '';
+    if (kanjiTotalStrokes) kanjiTotalStrokes.textContent = kanjiData.stroke_count || '4';
+    
+    // Start practice session on backend
+    const sessionData = await apiRequest('/kanji/practice/start', {
+      method: 'POST',
+      body: JSON.stringify({ kanji_char: kanji })
+    });
+    
+    // Store session ID for stroke submissions
+    window.currentKanjiSessionId = sessionData.data.session_id;
+    
+    // Show practice view
+    const kanjiSelect = document.getElementById('kanji-select');
+    const kanjiPractice = document.getElementById('kanji-practice');
+    const kanjiFeedback = document.getElementById('kanji-feedback');
+    const kanjiNextStroke = document.getElementById('kanji-next-stroke');
+    
+    if (kanjiSelect) kanjiSelect.classList.add('hidden');
+    if (kanjiPractice) kanjiPractice.classList.remove('hidden');
+    if (kanjiFeedback) kanjiFeedback.classList.add('hidden');
+    if (kanjiNextStroke) kanjiNextStroke.classList.add('hidden');
+    
+    // Clear canvas
+    clearKanjiCanvas();
+    
+  } catch (error) {
+    console.error('Failed to start kanji practice:', error);
+    showError('Failed to load kanji: ' + (error.message || 'Unknown error'));
+  } finally {
+    hideLoading();
+  }
 }
-
-async function loadKanjiData(kanji) {
-  // Mock data - in production, fetch from /api/kanji/:char
-  const kanjiData = {
-    '日': { meaning: 'Sun, day', readings: 'にち、ひ、か', strokes: 4 },
-    '月': { meaning: 'Moon, month', readings: 'げつ、つき', strokes: 4 },
-    '火': { meaning: 'Fire', readings: 'か、ひ', strokes: 4 },
-    '水': { meaning: 'Water', readings: 'すい、みず', strokes: 4 },
-    '木': { meaning: 'Tree, wood', readings: 'もく、き', strokes: 4 },
-    '金': { meaning: 'Gold, metal, money', readings: 'きん、かね', strokes: 8 }
-  };
-  
-  const data = kanjiData[kanji] || { meaning: 'Unknown', readings: '', strokes: 4 };
-  
-  const kanjiMeaning = document.getElementById('kanji-meaning');
-  const kanjiReadings = document.getElementById('kanji-readings');
-  const kanjiTotalStrokes = document.getElementById('kanji-total-strokes');
-  const kanjiStrokeNum = document.getElementById('kanji-stroke-num');
-  
-  if (kanjiMeaning) kanjiMeaning.textContent = data.meaning;
-  if (kanjiReadings) kanjiReadings.textContent = data.readings;
-  if (kanjiTotalStrokes) kanjiTotalStrokes.textContent = data.strokes;
-  if (kanjiStrokeNum) kanjiStrokeNum.textContent = '1';
 }
 
 function getCanvasCoordinates(e, canvas) {
@@ -1865,34 +1873,62 @@ function showKanjiHint() {
   kanjiCtx.stroke();
 }
 
-function checkKanjiStroke() {
-  // Simplified stroke validation
-  if (kanjiStrokes.length === 0) {
+async function checkKanjiStroke() {
+  if (kanjiStrokes.length === 0 || !window.currentKanjiSessionId) {
     showError('Please draw a stroke first');
     return;
   }
   
-  // Mock accuracy calculation
-  const accuracy = Math.floor(70 + Math.random() * 25); // 70-95%
+  showLoading();
   
-  const feedback = document.getElementById('kanji-feedback');
-  const accuracyEl = document.getElementById('kanji-accuracy');
-  const messageEl = document.getElementById('kanji-message');
-  
-  feedback.classList.remove('hidden');
-  accuracyEl.textContent = accuracy + '%';
-  
-  if (accuracy >= 85) {
-    accuracyEl.style.color = 'var(--success)';
-    messageEl.textContent = 'Excellent! Great stroke.';
-    document.getElementById('kanji-next-stroke').classList.remove('hidden');
-  } else if (accuracy >= 70) {
-    accuracyEl.style.color = 'var(--accent)';
-    messageEl.textContent = 'Good! Try to make the lines straighter.';
-    document.getElementById('kanji-next-stroke').classList.remove('hidden');
-  } else {
-    accuracyEl.style.color = '#e74c3c';
-    messageEl.textContent = 'Keep practicing! Watch the stroke direction.';
+  try {
+    // Get the last drawn stroke
+    const lastStroke = kanjiStrokes[kanjiStrokes.length - 1];
+    currentKanjiStroke = kanjiStrokes.length;
+    
+    // Send to backend for comparison
+    const result = await apiRequest('/kanji/practice/compare', {
+      method: 'POST',
+      body: JSON.stringify({
+        session_id: window.currentKanjiSessionId,
+        stroke_num: currentKanjiStroke,
+        path: lastStroke.path
+      })
+    });
+    
+    const data = result.data;
+    const accuracy = Math.round(data.accuracy);
+    
+    // Display feedback
+    const feedback = document.getElementById('kanji-feedback');
+    const accuracyEl = document.getElementById('kanji-accuracy');
+    const messageEl = document.getElementById('kanji-message');
+    
+    if (feedback) feedback.classList.remove('hidden');
+    if (accuracyEl) accuracyEl.textContent = accuracy + '%';
+    
+    if (accuracy >= 85) {
+      if (accuracyEl) accuracyEl.style.color = 'var(--success)';
+      if (messageEl) messageEl.textContent = data.feedback || 'Excellent! Perfect stroke.';
+    } else if (accuracy >= 70) {
+      if (accuracyEl) accuracyEl.style.color = 'var(--accent)';
+      if (messageEl) messageEl.textContent = data.feedback || 'Good! Keep practicing.';
+    } else {
+      if (accuracyEl) accuracyEl.style.color = '#e74c3c';
+      if (messageEl) messageEl.textContent = data.feedback || 'Try again. Follow the guide.';
+    }
+    
+    // Show next button if stroke was acceptable
+    const nextBtn = document.getElementById('kanji-next-stroke');
+    if (nextBtn && accuracy >= 60) {
+      nextBtn.classList.remove('hidden');
+    }
+    
+  } catch (error) {
+    console.error('Failed to check stroke:', error);
+    showError('Failed to validate stroke: ' + (error.message || 'Unknown error'));
+  } finally {
+    hideLoading();
   }
 }
 
