@@ -324,18 +324,18 @@ async function loadDailyGrammar() {
   } catch (error) {
     console.error('Failed to load grammar:', error);
     // Check if it's "not found" error (no patterns for this level)
-    const grammarPattern = document.getElementById('grammar-pattern');
-    if (!grammarPattern) return; // View may have changed
+    const errorGrammarPattern = document.getElementById('grammar-pattern');
+    if (!errorGrammarPattern) return; // View may have changed
     
     if (error.message && error.message.includes('not found')) {
-      grammarPattern.textContent = 'No patterns for this level yet';
+      errorGrammarPattern.textContent = 'No patterns for this level yet';
       const grammarMeaning = document.getElementById('grammar-meaning');
       if (grammarMeaning) {
         const currentLevel = document.getElementById('current-level');
         grammarMeaning.textContent = 'Grammar patterns coming soon for ' + (currentLevel?.textContent || 'this level');
       }
     } else {
-      grammarPattern.textContent = 'Error loading pattern';
+      errorGrammarPattern.textContent = 'Error loading pattern';
     }
   } finally {
     hideLoading();
@@ -363,10 +363,12 @@ function displayGrammar(pattern, progress) {
   if (grammarNuance) grammarNuance.textContent = pattern.nuance_notes;
   
   // Add TTS button to pattern
-  const grammarPattern = document.getElementById('grammar-pattern');
-  grammarPattern.style.cursor = 'pointer';
-  grammarPattern.title = 'Click to hear pronunciation';
-  grammarPattern.onclick = () => playTTS(pattern.pattern.replace(/〜/g, ''));
+  const patternEl = document.getElementById('grammar-pattern');
+  if (patternEl) {
+    patternEl.style.cursor = 'pointer';
+    patternEl.title = 'Click to hear pronunciation';
+    patternEl.onclick = () => playTTS(pattern.pattern.replace(/〜/g, ''));
+  }
   
   // Examples
   const examplesContainer = document.getElementById('grammar-examples');
@@ -1794,7 +1796,6 @@ async function startKanjiPractice(kanji) {
   } finally {
     hideLoading();
   }
-}
 }
 
 function getCanvasCoordinates(e, canvas) {
