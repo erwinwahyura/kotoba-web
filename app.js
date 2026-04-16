@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupReadingActions();
   setupWeakPointsActions();
   setupGoalsActions();
+  setupListeningActions();
+  setupThemeToggle();
   
   // Goals button
   document.getElementById('goals-btn')?.addEventListener('click', showGoalsModal);
@@ -216,6 +218,12 @@ function switchView(view) {
     document.getElementById('reading-levels')?.classList.remove('hidden');
     document.getElementById('reading-article')?.classList.add('hidden');
     document.getElementById('reading-results')?.classList.add('hidden');
+  }
+  if (view === 'listening') {
+    // Listening - show exercise selection
+    document.getElementById('listening-select')?.classList.remove('hidden');
+    document.getElementById('listening-active')?.classList.add('hidden');
+    stopListeningAudio();
   }
   if (view === 'progress') loadProgress();
 }
@@ -2466,6 +2474,313 @@ async function recordActivity(activityType, count = 1) {
   } catch (error) {
     console.error('Failed to record activity:', error);
   }
+}
+
+// ==================== LISTENING PRACTICE ====================
+
+let currentListeningExercise = null;
+let currentListeningSession = null;
+let listeningAudio = null;
+
+function setupListeningActions() {
+  // Level selection
+  document.querySelectorAll('.listening-level-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const level = card.dataset.level;
+      loadListeningExercises(level);
+    });
+  });
+  
+  // Back button
+  document.getElementById('listening-back')?.addEventListener('click', () => {
+    document.getElementById('listening-active').classList.add('hidden');
+    document.getElementById('listening-select').classList.remove('hidden');
+    stopListeningAudio();
+  });
+  
+  // Audio controls
+  document.getElementById('listening-play')?.addEventListener('click', playListeningAudio);
+  document.getElementById('listening-pause')?.addEventListener('click', pauseListeningAudio);
+  
+  // Tabs
+  document.querySelectorAll('.listening-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      switchListeningTab(tabName);
+    });
+  });
+  
+  // Next exercise
+  document.getElementById('listening-next')?.addEventListener('click', () => {
+    document.getElementById('listening-results').classList.add('hidden');
+    document.getElementById('listening-select').classList.remove('hidden');
+    stopListeningAudio();
+  });
+}
+
+async function loadListeningExercises(level) {
+  showLoading();
+  
+  try {
+    const data = await apiRequest(`/listening/exercises/${level}`);
+    const exercises = data.data.exercises || [];
+    
+    const container = document.getElementById('listening-exercises-list');
+    if (!container) return;
+    
+    container.innerHTML = exercises.map(ex => `
+      <div class="listening-exercise-card" data-id="${ex.id}">
+        <div class="listening-exercise-title">${ex.title}</div>
+        <div class="listening-exercise-meta">${ex.difficulty} • ${ex.duration}s • ${ex.topic}</div>
+      </div>
+    `).join('');
+    
+    // Add click handlers
+    container.querySelectorAll('.listening-exercise-card').forEach(card => {
+      card.addEventListener('click', () => startListeningExercise(card.dataset.id));
+    });
+    
+  } catch (error) {
+    console.error('Failed to load listening exercises:', error);
+    showError('Failed to load exercises');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function startListeningExercise(exerciseId) {
+  showLoading();
+  
+  try {
+    // Get exercise details
+    const exData = await apiRequest(`/listening/exercise/${exerciseId}`);
+    currentListeningExercise = exData.data;
+    
+    // Start session
+    const sessionData = await apiRequest('/listening/session/start', {
+      method: 'POST',
+      body: JSON.stringify({ exercise_id: exerciseId })
+    });
+    currentListeningSession = sessionData.data;
+    
+    // Update UI
+    document.getElementById('listening-select').classList.add('hidden');
+    document.getElementById('listening-active').classList.remove('hidden');
+    document.getElementById('listening-results').classList.add('hidden');
+    
+    document.getElementById('listening-title').textContent = currentListeningExercise.title;
+    
+    // Setup audio
+    setupListeningAudio(currentListeningExercise.audio_url);
+    
+    // Render content
+    renderListeningQuestions(currentListeningExercise.questions);
+    document.getElementById('listening-transcript').textContent = currentListeningExercise.transcript;
+    document.getElementById('listening-translation').textContent = currentListeningExercise.translation;
+    renderListeningVocab(currentListeningExercise.vocabulary);
+    
+  } catch (error) {
+    console.error('Failed to start listening exercise:', error);
+    showError('Failed to start exercise');
+  } finally {
+    hideLoading();
+  }
+}
+
+function setupListeningAudio(url) {
+  listeningAudio = new Audio(url);
+  listeningAudio.addEventListener('timeupdate', updateAudioTime);
+  listeningAudio.addEventListener('loadedmetadata', updateAudioTime);
+  
+  const audioElement = document.getElementById('listening-audio');
+  if (audioElement) {
+    audioElement.src = url;
+  }
+}
+
+function playListeningAudio() {
+  if (listeningAudio) listeningAudio.play();
+  document.getElementById('listening-audio')?.play();
+}
+
+function pauseListeningAudio() {
+  if (listeningAudio) listeningAudio.pause();
+  document.getElementById('listening-audio')?.pause();
+}
+
+function stopListeningAudio() {
+  if (listeningAudio) {
+    listeningAudio.pause();
+    listeningAudio.currentTime = 0;
+  }
+  const audioElement = document.getElementById('listening-audio');
+  if (audioElement) {
+    audioElement.pause();
+    audioElement.currentTime = 0;
+  }
+}
+
+function updateAudioTime() {
+  const audio = listeningAudio || document.getElementById('listening-audio');
+  if (!audio) return;
+  
+  const current = formatTime(audio.currentTime);
+  const duration = formatTime(audio.duration || 0);
+  const timeEl = document.getElementById('audio-time');
+  if (timeEl) timeEl.textContent = `${current} / ${duration}`;
+}
+
+function formatTime(seconds) {
+  if (isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function renderListeningQuestions(questions) {
+  const container = document.getElementById('listening-questions-list');
+  if (!container) return;
+  
+  container.innerHTML = questions.map((q, idx) => `
+    <div class="listening-question" data-question-id="${q.id}">
+      <div class="listening-question-text">${idx + 1}. ${q.question}</div>
+      <div class="listening-options">
+        ${q.options.map((opt, optIdx) => `
+          <div class="listening-option" data-option="${optIdx}">
+            ${String.fromCharCode(65 + optIdx)}. ${opt}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  
+  // Add click handlers
+  container.querySelectorAll('.listening-option').forEach(opt => {
+    opt.addEventListener('click', () => selectListeningAnswer(opt));
+  });
+}
+
+function renderListeningVocab(vocab) {
+  const container = document.getElementById('listening-vocab-list');
+  if (!container) return;
+  
+  container.innerHTML = vocab.map(v => `
+    <div class="vocab-item">
+      <div>
+        <div class="vocab-item-word">${v.word}</div>
+        <div class="vocab-item-reading">${v.reading}</div>
+      </div>
+      <div class="vocab-item-meaning">${v.meaning}</div>
+    </div>
+  `).join('');
+}
+
+async function selectListeningAnswer(optionEl) {
+  const questionEl = optionEl.closest('.listening-question');
+  const questionId = questionEl.dataset.questionId;
+  const answer = parseInt(optionEl.dataset.option);
+  
+  // Get audio position
+  const audio = listeningAudio || document.getElementById('listening-audio');
+  const position = audio ? Math.floor(audio.currentTime) : 0;
+  
+  showLoading();
+  
+  try {
+    const result = await apiRequest('/listening/session/answer', {
+      method: 'POST',
+      body: JSON.stringify({
+        session_id: currentListeningSession.session_id,
+        question_id: questionId,
+        answer: answer,
+        audio_position: position
+      })
+    });
+    
+    // Mark as answered
+    questionEl.querySelectorAll('.listening-option').forEach(opt => {
+      opt.classList.remove('selected');
+    });
+    optionEl.classList.add('selected');
+    
+    if (result.data.correct) {
+      optionEl.classList.add('correct');
+    } else {
+      optionEl.classList.add('incorrect');
+      // Highlight correct answer
+      const correctIdx = result.data.correct_answer;
+      const correctOpt = questionEl.querySelector(`[data-option="${correctIdx}"]`);
+      if (correctOpt) correctOpt.classList.add('correct');
+    }
+    
+    // Check if all answered
+    checkListeningComplete();
+    
+  } catch (error) {
+    console.error('Failed to submit answer:', error);
+  } finally {
+    hideLoading();
+  }
+}
+
+function checkListeningComplete() {
+  const answered = document.querySelectorAll('.listening-option.selected').length;
+  const total = currentListeningExercise?.questions?.length || 0;
+  
+  if (answered >= total) {
+    // Show results
+    document.getElementById('listening-results').classList.remove('hidden');
+    document.getElementById('listening-score').textContent = 'Completed!';
+  }
+}
+
+function switchListeningTab(tabName) {
+  document.querySelectorAll('.listening-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === tabName);
+  });
+  
+  document.querySelectorAll('.listening-panel').forEach(panel => {
+    panel.classList.add('hidden');
+  });
+  
+  const activePanel = document.getElementById(`listening-${tabName}-panel`);
+  if (activePanel) activePanel.classList.remove('hidden');
+}
+
+// ==================== DARK MODE ====================
+
+function setupThemeToggle() {
+  const toggle = document.getElementById('theme-toggle');
+  if (!toggle) return;
+  
+  // Check saved preference
+  const savedTheme = localStorage.getItem('kotoba-theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    updateThemeIcon(true);
+  }
+  
+  toggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('kotoba-theme', 'light');
+      updateThemeIcon(false);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('kotoba-theme', 'dark');
+      updateThemeIcon(true);
+    }
+  });
+}
+
+function updateThemeIcon(isDark) {
+  const icon = document.querySelector('#theme-toggle .nav-icon');
+  const label = document.querySelector('#theme-toggle .nav-label');
+  
+  if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+  if (label) label.textContent = isDark ? 'Light' : 'Dark';
 }
 
 // Service Worker for PWA

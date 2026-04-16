@@ -35,6 +35,22 @@
   --font-jp: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
 }
 
+/* Dark Mode Theme */
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --surface: #2a2a2a;
+  --surface-hover: #333333;
+  --border: #404040;
+  --text: #f0f0f0;
+  --text-2: #b0b0b0;
+  --text-3: #808080;
+  --accent: #4a7fc0;
+  --accent-hover: #5a8fd0;
+  --warning: #f39c12;
+  --warning-bg: #3d2e1a;
+  --success: #2ecc71;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -2116,6 +2132,203 @@ h1, h2, h3 {
 
 .kanji-progress {
   text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+/* Listening Practice Styles */
+.listening-select {
+  padding: var(--space-lg);
+}
+
+.listening-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.listening-level-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.listening-level-card:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+.listening-level-badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+
+.listening-level-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.listening-level-desc {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.listening-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.listening-exercise-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.listening-exercise-card:hover {
+  border-color: var(--accent);
+}
+
+.listening-exercise-title {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.listening-exercise-meta {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.listening-active {
+  padding: var(--space-lg);
+}
+
+.listening-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.listening-header h3 {
+  flex: 1;
+  margin: 0;
+}
+
+.audio-player-container {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.audio-player-container audio {
+  width: 100%;
+  margin-bottom: var(--space-md);
+}
+
+.audio-controls {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.audio-time {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin-left: auto;
+}
+
+.listening-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-sm);
+}
+
+.listening-tab {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -9px;
+}
+
+.listening-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.listening-panel {
+  display: none;
+}
+
+.listening-panel.active {
+  display: block;
+}
+
+.transcript-text {
+  font-family: var(--font-jp);
+  font-size: 1.125rem;
+  line-height: 2;
+  color: var(--text);
+  margin-bottom: var(--space-lg);
+  white-space: pre-line;
+}
+
+.transcript-translation {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  font-style: italic;
+  border-left: 3px solid var(--border);
+  padding-left: var(--space-md);
+}
+
+.vocab-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.vocab-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.vocab-item-word {
+  font-family: var(--font-jp);
+  font-size: 1.125rem;
+  color: var(--text);
+}
+
+.vocab-item-reading {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.vocab-item-meaning {
   font-size: 0.875rem;
   color: var(--text-2);
 }
