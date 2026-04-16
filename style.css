@@ -2333,6 +2333,55 @@ h1, h2, h3 {
   color: var(--text-2);
 }
 
+/* Listening Question Styles */
+.listening-question {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.listening-question-text {
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: var(--space-md);
+}
+
+.listening-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.listening-option {
+  padding: var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.listening-option:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+}
+
+.listening-option.selected {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.listening-option.correct {
+  border-color: var(--success);
+  background: rgba(39, 174, 96, 0.1);
+}
+
+.listening-option.incorrect {
+  border-color: var(--n2);
+  background: rgba(231, 76, 60, 0.1);
+}
+
 /* Reading Comprehension Styles */
 .reading-levels {
   display: grid;

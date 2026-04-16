@@ -702,82 +702,82 @@
             </div>
           </div>
         </div>
+
+        <!-- Listening Practice View -->
+        <div id="listening-view" class="view">
+          <div class="view-header">
+            <span class="view-label">Listening Practice</span>
+            <span class="listening-level" id="listening-current-level">N5</span>
+          </div>
+          
+          <!-- Exercise Selection -->
+          <div id="listening-select" class="listening-select">
+            <div class="listening-levels">
+              <div class="listening-level-card" data-level="N5">
+                <div class="listening-level-badge n5">N5</div>
+                <div class="listening-level-name">Beginner</div>
+                <div class="listening-level-desc">Simple conversations, announcements</div>
+              </div>
+              <div class="listening-level-card" data-level="N4">
+                <div class="listening-level-badge n4">N4</div>
+                <div class="listening-level-name">Elementary</div>
+                <div class="listening-level-desc">Everyday topics, clear speech</div>
+              </div>
+            </div>
+            <div class="listening-exercises" id="listening-exercises-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          
+          <!-- Active Listening Exercise -->
+          <div id="listening-active" class="listening-active hidden">
+            <div class="listening-header">
+              <button class="btn btn-secondary btn-sm" id="listening-back">← Back</button>
+              <h3 id="listening-title">Exercise Title</h3>
+            </div>
+            
+            <div class="audio-player-container">
+              <audio id="listening-audio" controls></audio>
+              <div class="audio-controls">
+                <button class="btn btn-secondary" id="listening-play">▶ Play</button>
+                <button class="btn btn-secondary" id="listening-pause">⏸ Pause</button>
+                <span class="audio-time" id="audio-time">0:00 / 0:00</span>
+              </div>
+            </div>
+            
+            <div class="listening-tabs">
+              <button class="listening-tab active" data-tab="questions">Questions</button>
+              <button class="listening-tab" data-tab="transcript">Transcript</button>
+              <button class="listening-tab" data-tab="vocab">Vocabulary</button>
+            </div>
+            
+            <div class="listening-content">
+              <div id="listening-questions-panel" class="listening-panel active">
+                <div id="listening-questions-list">
+                  <!-- Questions populated by JS -->
+                </div>
+              </div>
+              <div id="listening-transcript-panel" class="listening-panel hidden">
+                <div class="transcript-text" id="listening-transcript"></div>
+                <div class="transcript-translation" id="listening-translation"></div>
+              </div>
+              <div id="listening-vocab-panel" class="listening-panel hidden">
+                <div class="vocab-list" id="listening-vocab-list"></div>
+              </div>
+            </div>
+            
+            <div class="listening-results hidden" id="listening-results">
+              <div class="listening-score" id="listening-score">Score: 0%</div>
+              <button class="btn btn-primary" id="listening-next">Next Exercise</button>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="hidden">
       <div class="spinner"></div>
-    </div>
-  </div>
-
-  <!-- Listening Practice View -->
-  <div id="listening-view" class="view">
-    <div class="view-header">
-      <span class="view-label">Listening Practice</span>
-      <span class="listening-level" id="listening-current-level">N5</span>
-    </div>
-    
-    <!-- Exercise Selection -->
-    <div id="listening-select" class="listening-select">
-      <div class="listening-levels">
-        <div class="listening-level-card" data-level="N5">
-          <div class="listening-level-badge n5">N5</div>
-          <div class="listening-level-name">Beginner</div>
-          <div class="listening-level-desc">Simple conversations, announcements</div>
-        </div>
-        <div class="listening-level-card" data-level="N4">
-          <div class="listening-level-badge n4">N4</div>
-          <div class="listening-level-name">Elementary</div>
-          <div class="listening-level-desc">Everyday topics, clear speech</div>
-        </div>
-      </div>
-      <div class="listening-exercises" id="listening-exercises-list">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-    
-    <!-- Active Listening Exercise -->
-    <div id="listening-active" class="listening-active hidden">
-      <div class="listening-header">
-        <button class="btn btn-secondary btn-sm" id="listening-back">← Back</button>
-        <h3 id="listening-title">Exercise Title</h3>
-      </div>
-      
-      <div class="audio-player-container">
-        <audio id="listening-audio" controls></audio>
-        <div class="audio-controls">
-          <button class="btn btn-secondary" id="listening-play">▶ Play</button>
-          <button class="btn btn-secondary" id="listening-pause">⏸ Pause</button>
-          <span class="audio-time" id="audio-time">0:00 / 0:00</span>
-        </div>
-      </div>
-      
-      <div class="listening-tabs">
-        <button class="listening-tab active" data-tab="questions">Questions</button>
-        <button class="listening-tab" data-tab="transcript">Transcript</button>
-        <button class="listening-tab" data-tab="vocab">Vocabulary</button>
-      </div>
-      
-      <div class="listening-content">
-        <div id="listening-questions-panel" class="listening-panel active">
-          <div id="listening-questions-list">
-            <!-- Questions populated by JS -->
-          </div>
-        </div>
-        <div id="listening-transcript-panel" class="listening-panel hidden">
-          <div class="transcript-text" id="listening-transcript"></div>
-          <div class="transcript-translation" id="listening-translation"></div>
-        </div>
-        <div id="listening-vocab-panel" class="listening-panel hidden">
-          <div class="vocab-list" id="listening-vocab-list"></div>
-        </div>
-      </div>
-      
-      <div class="listening-results hidden" id="listening-results">
-        <div class="listening-score" id="listening-score">Score: 0%</div>
-        <button class="btn btn-primary" id="listening-next">Next Exercise</button>
-      </div>
     </div>
   </div>
 
