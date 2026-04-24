@@ -1034,8 +1034,18 @@ let currentConjIndex = 0;
 let conjAnswers = [];
 let conjStreak = 0;
 let conjBestStreak = 0;
+let currentConjLevel = 'N3'; // Default level
 
 function setupConjugationActions() {
+  // Level selector buttons
+  document.querySelectorAll('.conj-level-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.conj-level-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentConjLevel = btn.dataset.level;
+    });
+  });
+  
   // Form selection cards
   document.querySelectorAll('.conj-form-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -1070,7 +1080,7 @@ async function startConjugationDrill(form) {
   showLoading();
   
   try {
-    const data = await apiRequest(`/conjugation/start?form=${form}&count=10`);
+    const data = await apiRequest(`/conjugation/start?form=${form}&count=10&level=${currentConjLevel}`);
     
     currentConjSession = data.data.session;
     currentConjChallenges = data.data.challenges;

@@ -1395,6 +1395,57 @@ h1, h2, h3 {
   font-weight: 600;
 }
 
+.conj-level-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.conj-level-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.conj-level-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.conj-level-btn {
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.conj-level-btn:hover {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.conj-level-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.conj-level-btn[data-level="N5"].active { background: var(--n5); border-color: var(--n5); }
+.conj-level-btn[data-level="N4"].active { background: var(--n4); border-color: var(--n4); }
+.conj-level-btn[data-level="N3"].active { background: var(--n3); border-color: var(--n3); color: white; }
+.conj-level-btn[data-level="N2"].active { background: var(--n2); border-color: var(--n2); }
+.conj-level-btn[data-level="N1"].active { background: var(--n1); border-color: var(--n1); }
+
 .conj-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
