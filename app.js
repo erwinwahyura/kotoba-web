@@ -1,5 +1,5 @@
 // Kotoba Web App - 言葉
-const API_URL = 'http://46.224.127.221:8090/api';
+const API_URL = 'https://kotoba.erwarx.com/api';
 
 // State
 let token = localStorage.getItem('kotoba_token');
