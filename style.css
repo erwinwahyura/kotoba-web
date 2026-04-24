@@ -1446,6 +1446,24 @@ h1, h2, h3 {
 .conj-level-btn[data-level="N2"].active { background: var(--n2); border-color: var(--n2); }
 .conj-level-btn[data-level="N1"].active { background: var(--n1); border-color: var(--n1); }
 
+/* Available levels (unlocked) */
+.conj-level-btn.available {
+  opacity: 1;
+}
+
+/* Locked levels (above user's current level) */
+.conj-level-btn.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--surface);
+  color: var(--text-3);
+}
+
+.conj-level-btn.locked:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
 .conj-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

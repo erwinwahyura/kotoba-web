@@ -1036,15 +1036,47 @@ let conjStreak = 0;
 let conjBestStreak = 0;
 let currentConjLevel = 'N3'; // Default level
 
-function setupConjugationActions() {
-  // Level selector buttons
-  document.querySelectorAll('.conj-level-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.conj-level-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentConjLevel = btn.dataset.level;
+// Initialize conjugation level based on user's current progress level
+async function initializeConjugationLevel() {
+  try {
+    const progress = await apiRequest('/progress');
+    const userLevel = progress.data?.progress?.current_level || progress.data?.current_level || 'N5';
+    
+    // Set currentConjLevel to include all levels up to user's level
+    currentConjLevel = userLevel;
+    
+    // Update level selector UI to show active level
+    document.querySelectorAll('.conj-level-btn').forEach(btn => {
+      btn.classList.remove('active');
+      // Mark all levels <= user level as available
+      const btnLevel = btn.dataset.level;
+      if (isLevelAtOrBelow(btnLevel, userLevel)) {
+        btn.classList.add('available');
+        if (btnLevel === userLevel) {
+          btn.classList.add('active');
+        }
+      } else {
+        btn.disabled = true;
+        btn.classList.add('locked');
+      }
     });
-  });
+  } catch (error) {
+    console.log('Could not load user level, defaulting to N5');
+    currentConjLevel = 'N5';
+  }
+}
+
+// Helper: Check if levelA is at or below levelB (N5 < N4 < N3 < N2 < N1)
+function isLevelAtOrBelow(levelA, levelB) {
+  const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
+  const indexA = levels.indexOf(levelA);
+  const indexB = levels.indexOf(levelB);
+  return indexA <= indexB;
+}
+
+function setupConjugationActions() {
+  // Initialize conjugation level based on user's current progress level
+  initializeConjugationLevel();
   
   // Form selection cards
   document.querySelectorAll('.conj-form-card').forEach(card => {
@@ -1080,7 +1112,8 @@ async function startConjugationDrill(form) {
   showLoading();
   
   try {
-    const data = await apiRequest(`/conjugation/start?form=${form}&count=10&level=${currentConjLevel}`);
+    // Pass max_level to get challenges up to and including user's current level
+    const data = await apiRequest(`/conjugation/start?form=${form}&count=10&max_level=${currentConjLevel}`);
     
     currentConjSession = data.data.session;
     currentConjChallenges = data.data.challenges;
