@@ -731,13 +731,97 @@ h1, h2, h3 {
   .stats-grid {
     grid-template-columns: repeat(4, 1fr);
   }
-  
+
   .word-jp {
     font-size: 4rem;
   }
-  
+
   .grammar-pattern {
     font-size: 3rem;
+  }
+}
+
+/* Mobile — iPhone 12 Pro and similar (≤480px) */
+@media (max-width: 480px) {
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-header {
+    overflow-x: hidden;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  /* Nav: smaller padding, scroll horizontally if needed */
+  .header-nav {
+    max-width: 100%;
+    gap: 2px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .header-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-btn {
+    padding: var(--space-sm) 6px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Auth */
+  .auth-container {
+    max-width: 100%;
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  /* Japanese word card */
+  .word-jp {
+    font-size: 2.5rem;
+  }
+
+  /* Grammar */
+  .grammar-pattern {
+    font-size: 1.75rem;
+  }
+
+  /* SRS quality buttons: 2 columns on mobile */
+  .quality-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Grammar compare: stack vertically */
+  .compare-patterns {
+    grid-template-columns: 1fr;
+  }
+
+  /* Listening/Reading level grids: smaller min for single-col on 390px */
+  .listening-levels,
+  .reading-levels {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  /* Conjugation form grid */
+  .conj-form-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  /* Kanji canvas: responsive but capped at 300px */
+  .kanji-canvas-container {
+    width: min(300px, 90vw);
+    height: min(300px, 90vw);
+  }
+
+  /* Buttons: ensure 44px touch target */
+  .btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
