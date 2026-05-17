@@ -6,6 +6,7 @@ let token = localStorage.getItem('kotoba_token');
 let currentView = 'vocab';
 let currentWord = null;
 let currentGrammar = null;
+let grammarHistory = []; // stack of previously viewed grammar IDs
 
 // DOM Elements
 const authScreen = document.getElementById('auth-screen');
@@ -316,9 +317,12 @@ function displayWord(word, progress) {
 // Grammar
 async function loadDailyGrammar() {
   showLoading();
-  
+
   try {
     const data = await apiRequest('/grammar/daily');
+    if (currentGrammar && currentGrammar.id) {
+      grammarHistory.push(currentGrammar.id);
+    }
     currentGrammar = data.data.pattern;
     displayGrammar(data.data.pattern, data.data.progress);
   } catch (error) {
@@ -616,11 +620,26 @@ function setupActions() {
   });
   
   // Grammar actions
-  document.getElementById('prev-grammar-btn').addEventListener('click', (e) => {
+  document.getElementById('prev-grammar-btn').addEventListener('click', async (e) => {
     e.preventDefault();
-    // Navigate through grammar patterns
     if (!currentGrammar) return;
-    alert('Previous pattern - coming soon!');
+    if (grammarHistory.length === 0) {
+      showError('No previous pattern in this session');
+      return;
+    }
+    const prevId = grammarHistory.pop();
+    showLoading();
+    try {
+      const data = await apiRequest(`/grammar/${prevId}`);
+      currentGrammar = data.data;
+      displayGrammar(data.data, {});
+    } catch (error) {
+      console.error('Failed to load previous grammar:', error);
+      showError('Failed to load previous pattern');
+      grammarHistory.push(prevId); // restore on error
+    } finally {
+      hideLoading();
+    }
   });
   
   document.getElementById('next-grammar-btn').addEventListener('click', async (e) => {
@@ -1948,7 +1967,7 @@ async function checkKanjiStroke() {
       body: JSON.stringify({
         session_id: window.currentKanjiSessionId,
         stroke_num: currentKanjiStroke,
-        path: lastStroke.path
+        path: lastStroke
       })
     });
     
@@ -2149,9 +2168,52 @@ function getMockArticle(level) {
 }
 
 // Expose to window for inline handlers
-window.lookupWord = function(word) {
-  // In production, show popup with definition and add to SRS
-  alert(`Word: ${word}\n\nClick to add to vocabulary list (feature coming soon)`);
+window.lookupWord = async function(word) {
+  // Remove any existing popup
+  const existing = document.getElementById('word-lookup-popup');
+  if (existing) existing.remove();
+
+  const popup = document.createElement('div');
+  popup.id = 'word-lookup-popup';
+  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg,#fff);border:1px solid var(--border,#e8e8e8);border-radius:12px;padding:20px;min-width:280px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;font-family:var(--font-ja,sans-serif)';
+  popup.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:1.6rem;font-weight:700">${word}</span>
+      <button onclick="document.getElementById('word-lookup-popup').remove()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-secondary,#888)">✕</button>
+    </div>
+    <div id="word-lookup-content" style="color:var(--text-secondary,#666)">Looking up…</div>
+  `;
+  document.body.appendChild(popup);
+
+  try {
+    const data = await apiRequest(`/vocab/search?q=${encodeURIComponent(word)}&limit=1`);
+    const results = data.data?.results || data.data || [];
+    const content = document.getElementById('word-lookup-content');
+    if (!content) return;
+    if (results.length === 0) {
+      content.innerHTML = `<p>No entry found for <strong>${word}</strong></p>`;
+    } else {
+      const v = results[0];
+      content.innerHTML = `
+        <p style="font-size:0.9rem;color:var(--text-secondary,#888);margin-bottom:4px">${v.reading || ''}</p>
+        <p style="font-weight:600;margin-bottom:8px">${v.short_meaning || v.meaning || ''}</p>
+        ${v.jlpt_level ? `<span class="level-badge ${v.jlpt_level.toLowerCase()}" style="font-size:0.7rem;padding:2px 8px">${v.jlpt_level}</span>` : ''}
+      `;
+    }
+  } catch (err) {
+    const content = document.getElementById('word-lookup-content');
+    if (content) content.innerHTML = `<p>Could not look up <strong>${word}</strong></p>`;
+  }
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closePopup(e) {
+      if (!popup.contains(e.target)) {
+        popup.remove();
+        document.removeEventListener('click', closePopup);
+      }
+    });
+  }, 100);
 };
 
 window.selectReadingAnswer = function(questionIdx, optionIdx) {
