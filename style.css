@@ -2818,3 +2818,53 @@ h1, h2, h3 {
   color: var(--accent);
   margin: var(--space-md) 0;
 }
+/* Reading — additional styles */
+.reading-intro {
+  font-size: 0.85rem;
+  color: var(--text-2);
+  margin-bottom: var(--space-md);
+}
+
+.reading-level-badge.n1 { background: rgba(155,89,182,0.15); color: var(--n1, #9b59b6); }
+.reading-level-badge.n2 { background: rgba(52,152,219,0.15); color: var(--n2, #3498db); }
+.reading-level-badge.n3 { background: rgba(46,204,113,0.15); color: var(--n3, #2ecc71); }
+
+.article-text .word.tappable {
+  cursor: pointer;
+  border-bottom: 1px dotted var(--accent);
+  transition: background 0.15s;
+  border-radius: 2px;
+}
+
+.article-text .word.tappable:hover {
+  background: rgba(44, 90, 160, 0.12);
+}
+
+.reading-review {
+  text-align: left;
+  margin: var(--space-lg) 0;
+}
+
+.reading-question.correct {
+  border-left: 3px solid var(--success);
+}
+
+.reading-question.incorrect {
+  border-left: 3px solid #e74c3c;
+}
+
+.review-answer {
+  font-size: 0.85rem;
+  color: var(--text-2);
+  margin-top: var(--space-xs);
+}
+
+.review-explanation {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: var(--space-sm);
+  margin-top: var(--space-sm);
+  line-height: 1.5;
+}

@@ -2090,51 +2090,49 @@ function setupReadingActions() {
 async function startReadingArticle(level) {
   currentReadingLevel = level;
   readingAnswers = {};
-  
+
   showLoading();
-  
+
   try {
-    // Mock article - in production, fetch from /api/reading/:level
-    const article = getMockArticle(level);
+    const data = await apiRequest(`/reading/random/${level}`);
+    const article = data.data?.article || data.data;
     currentArticle = article;
-    
-    // Hide levels, show article
+
     document.getElementById('reading-levels').classList.add('hidden');
     document.getElementById('reading-article').classList.remove('hidden');
     document.getElementById('reading-results').classList.add('hidden');
-    
-    // Display article
+
     document.getElementById('article-title').textContent = article.title;
-    
-    // Make text clickable for word lookup
-    const textHtml = article.text.split(/(\s+)/).map(word => {
-      if (word.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/)) {
-        return `<span class="word" onclick="lookupWord('${word}')">${word}</span>`;
+
+    // Segment by script-type runs so every kanji compound is tappable
+    const textHtml = segmentJapanese(article.text).map(seg => {
+      if (/[\u4E00-\u9FFF\u3400-\u4DBF]/.test(seg) || /[\u30A0-\u30FF]/.test(seg) || /[\u3040-\u309F]/.test(seg)) {
+        const safe = seg.replace(/'/g, '’');
+        return `<span class="word tappable" onclick="lookupWord('${safe}')">${seg}</span>`;
       }
-      return word;
+      return seg;
     }).join('');
-    
+
     document.getElementById('article-text').innerHTML = textHtml;
-    
-    // Display questions
+
+    // Render questions keyed by ID for API submission
     const questionsContainer = document.getElementById('reading-questions');
-    questionsContainer.innerHTML = article.questions.map((q, idx) => `
+    questionsContainer.innerHTML = (article.questions || []).map((q, idx) => `
       <div class="reading-question">
         <div class="reading-question-text">${idx + 1}. ${q.question}</div>
         <div class="reading-options">
-          ${q.options.map((opt, optIdx) => `
-            <div class="reading-option" data-question="${idx}" data-option="${optIdx}" onclick="selectReadingAnswer(${idx}, ${optIdx})">
+          ${(q.options || []).map((opt, optIdx) => `
+            <div class="reading-option" data-qid="${q.id}" data-option="${optIdx}" onclick="selectReadingAnswer('${q.id}', ${optIdx})">
               ${String.fromCharCode(65 + optIdx)}. ${opt}
             </div>
           `).join('')}
         </div>
       </div>
     `).join('');
-    
-    // Start timer
+
     startReadingTimer();
     readingStartTime = Date.now();
-    
+
   } catch (error) {
     console.error('Failed to load reading article:', error);
     showError('Failed to load article');
@@ -2143,48 +2141,13 @@ async function startReadingArticle(level) {
   }
 }
 
-function getMockArticle(level) {
-  const articles = {
-    'N3': {
-      title: '日本の四季',
-      text: '日本には四季があります。春は桜が咲きます。夏は暑くて、花火大会があります。秋は紅葉が美しいです。冬は寒くて、雪が降ります。',
-      questions: [
-        {
-          question: '日本の春には何が咲きますか？',
-          options: ['桜', '紅葉', '雪', '花火'],
-          correct: 0
-        },
-        {
-          question: '夏に何がありますか？',
-          options: ['雪', '花火大会', '紅葉', '桜'],
-          correct: 1
-        },
-        {
-          question: '秋はどうですか？',
-          options: ['暑い', '寒い', '美しい', '咲く'],
-          correct: 2
-        }
-      ]
-    },
-    'N2': {
-      title: '働き方改革',
-      text: '日本政府は働き方改革を進めています。残業時間を減らし、有給休暇を取りやすくする政策を実施しています。これにより、ワークライフバランスが改善されることが期待されています。',
-      questions: [
-        {
-          question: '働き方改革の目的は何ですか？',
-          options: ['残業を増やす', 'ワークライフバランスの改善', '給料を下げる', '休暇を減らす'],
-          correct: 1
-        },
-        {
-          question: '政府は何を実施していますか？',
-          options: ['残業時間を増やす政策', '有給休暇を取りにくくする政策', '残業時間を減らす政策', '給料を下げる政策'],
-          correct: 2
-        }
-      ]
-    }
-  };
-  
-  return articles[level] || articles['N3'];
+// Split Japanese text into script-type runs so individual words are tappable
+function segmentJapanese(text) {
+  const segments = [];
+  const re = /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]+|[\u30A0-\u30FF]+|[\u3040-\u309F]+|[A-Za-z0-9]+|./g;
+  let m;
+  while ((m = re.exec(text)) !== null) segments.push(m[0]);
+  return segments;
 }
 
 // Expose to window for inline handlers
@@ -2236,20 +2199,20 @@ window.lookupWord = async function(word) {
   }, 100);
 };
 
-window.selectReadingAnswer = function(questionIdx, optionIdx) {
-  readingAnswers[questionIdx] = optionIdx;
-  
-  // Update UI
-  document.querySelectorAll(`.reading-option[data-question="${questionIdx}"]`).forEach(opt => {
+window.selectReadingAnswer = function(questionId, optionIdx) {
+  readingAnswers[questionId] = optionIdx;
+
+  document.querySelectorAll(`.reading-option[data-qid="${questionId}"]`).forEach(opt => {
     opt.classList.remove('selected');
   });
-  const selectedOption = document.querySelector(`.reading-option[data-question="${questionIdx}"][data-option="${optionIdx}"]`);
-  if (selectedOption) selectedOption.classList.add('selected');
+  const sel = document.querySelector(`.reading-option[data-qid="${questionId}"][data-option="${optionIdx}"]`);
+  if (sel) sel.classList.add('selected');
 };
 
 function startReadingTimer() {
   let seconds = 600; // 10 minutes for N3
   if (currentReadingLevel === 'N2') seconds = 900; // 15 minutes for N2
+  if (currentReadingLevel === 'N1') seconds = 1200; // 20 minutes for N1
   
   updateReadingTimer(seconds);
   
@@ -2278,40 +2241,49 @@ function stopReadingTimer() {
   }
 }
 
-function submitReadingAnswers() {
+async function submitReadingAnswers() {
   stopReadingTimer();
-  
-  const questions = currentArticle.questions;
-  let correct = 0;
-  
-  questions.forEach((q, idx) => {
-    if (readingAnswers[idx] === q.correct) {
-      correct++;
-    }
-  });
-  
-  const score = Math.round((correct / questions.length) * 100);
-  
-  // Show results
-  document.getElementById('reading-article').classList.add('hidden');
-  document.getElementById('reading-results').classList.remove('hidden');
-  document.getElementById('reading-score').textContent = 
-    `${correct}/${questions.length} (${score}%)`;
-  
-  // Show review
-  const reviewContainer = document.getElementById('reading-review');
-  reviewContainer.innerHTML = questions.map((q, idx) => {
-    const userAnswer = readingAnswers[idx];
-    const isCorrect = userAnswer === q.correct;
-    
-    return `
-      <div class="reading-question ${isCorrect ? 'correct' : 'incorrect'}">
-        <div class="reading-question-text">${idx + 1}. ${q.question}</div>
-        <div>Your answer: ${userAnswer !== undefined ? String.fromCharCode(65 + userAnswer) : 'Not answered'}</div>
-        <div>Correct answer: ${String.fromCharCode(65 + q.correct)}</div>
-      </div>
-    `;
-  }).join('');
+
+  const questions = currentArticle.questions || [];
+  if (questions.length === 0) return;
+
+  try {
+    const data = await apiRequest('/reading/submit', 'POST', {
+      article_id: currentArticle.id,
+      answers: readingAnswers
+    });
+    const result = data.data || {};
+
+    document.getElementById('reading-article').classList.add('hidden');
+    document.getElementById('reading-results').classList.remove('hidden');
+    document.getElementById('reading-score').textContent =
+      `${result.correct}/${result.total} (${result.score}%)`;
+
+    const reviewContainer = document.getElementById('reading-review');
+    reviewContainer.innerHTML = (result.results || []).map((r, idx) => {
+      const q = questions.find(q => q.id === r.question_id) || questions[idx] || {};
+      const opts = q.options || [];
+      return `
+        <div class="reading-question ${r.is_correct ? 'correct' : 'incorrect'}">
+          <div class="reading-question-text">${idx + 1}. ${q.question || ''}</div>
+          <div class="review-answer">Your answer: ${r.user_answer !== undefined && r.user_answer !== null ? (String.fromCharCode(65 + r.user_answer) + '. ' + (opts[r.user_answer] || '')) : 'Not answered'}</div>
+          <div class="review-answer">Correct: ${String.fromCharCode(65 + r.correct_index)}. ${opts[r.correct_index] || ''}</div>
+          ${r.explanation ? `<div class="review-explanation">${r.explanation}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Failed to submit reading answers:', err);
+    // Fallback to local scoring
+    let correct = 0;
+    questions.forEach(q => {
+      if (readingAnswers[q.id] === q.correct_index) correct++;
+    });
+    const score = Math.round((correct / questions.length) * 100);
+    document.getElementById('reading-article').classList.add('hidden');
+    document.getElementById('reading-results').classList.remove('hidden');
+    document.getElementById('reading-score').textContent = `${correct}/${questions.length} (${score}%)`;
+  }
 }
 
 // ==================== WEAK POINTS DRILL ====================
