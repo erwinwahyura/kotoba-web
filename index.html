@@ -391,6 +391,19 @@
               </div>
             </div>
             <button class="btn btn-primary" id="conj-restart">Practice Again</button>
+            <button class="btn btn-secondary" id="conj-weak-points-btn">Focus Weak Points</button>
+          </div>
+
+          <!-- Weak Points Panel -->
+          <div id="weak-points-panel" class="weak-points-panel hidden">
+            <div class="weak-points-header">
+              <span class="view-label">Weak Points</span>
+              <button class="btn btn-secondary btn-sm" id="close-weak-points">✕</button>
+            </div>
+            <div id="weak-points-list" class="weak-points-list">
+              <p class="loading-text">Loading your weak areas...</p>
+            </div>
+            <button class="btn btn-primary hidden" id="start-weak-drill-btn">Start Focused Drill</button>
           </div>
         </div>
 
@@ -405,7 +418,7 @@
             <div class="test-level-card" data-level="N5">
               <div class="test-level-badge n5">N5</div>
               <div class="test-level-name">Beginner</div>
-              <div class="test-level-desc">Basic vocabulary & grammar</div>
+              <div class="test-level-desc">Basic vocabulary &amp; grammar</div>
             </div>
             <div class="test-level-card" data-level="N4">
               <div class="test-level-badge n4">N4</div>
@@ -415,12 +428,24 @@
             <div class="test-level-card" data-level="N3">
               <div class="test-level-badge n3">N3</div>
               <div class="test-level-name">Intermediate</div>
-              <div class="test-level-desc"> everyday Japanese</div>
+              <div class="test-level-desc">Everyday Japanese</div>
             </div>
             <div class="test-level-card" data-level="N2">
               <div class="test-level-badge n2">N2</div>
               <div class="test-level-name">Upper-Int</div>
               <div class="test-level-desc">Business level target</div>
+            </div>
+          </div>
+
+          <!-- Question Count Selector (shown after level pick) -->
+          <div id="test-count-selector" class="test-count-selector hidden">
+            <button class="btn btn-secondary btn-sm" id="test-count-back">← Back</button>
+            <p class="test-count-label">How many questions?</p>
+            <div class="test-count-options">
+              <button class="test-count-btn" data-count="5">5<span>Quick</span></button>
+              <button class="test-count-btn" data-count="10">10<span>Short</span></button>
+              <button class="test-count-btn active" data-count="20">20<span>Standard</span></button>
+              <button class="test-count-btn" data-count="50">50<span>Full</span></button>
             </div>
           </div>
           

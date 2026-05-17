@@ -1368,16 +1368,35 @@ let currentQuestionIndex = 0;
 let testAnswers = {};
 let testTimerInterval = null;
 let testStartTime = null;
+let pendingTestLevel = null;
+let selectedQuestionCount = 20;
 
 function setupJLPTActions() {
-  // Level cards
+  // Level cards → show count selector
   document.querySelectorAll('.test-level-card').forEach(card => {
     card.addEventListener('click', () => {
-      const level = card.dataset.level;
-      startJLPTTest(level);
+      pendingTestLevel = card.dataset.level;
+      document.getElementById('test-levels').classList.add('hidden');
+      document.getElementById('test-count-selector').classList.remove('hidden');
     });
   });
-  
+
+  // Count selector buttons
+  document.querySelectorAll('.test-count-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.test-count-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedQuestionCount = parseInt(btn.dataset.count, 10);
+      startJLPTTest(pendingTestLevel, selectedQuestionCount);
+    });
+  });
+
+  // Back from count selector
+  document.getElementById('test-count-back')?.addEventListener('click', () => {
+    document.getElementById('test-count-selector').classList.add('hidden');
+    document.getElementById('test-levels').classList.remove('hidden');
+  });
+
   // Test navigation
   document.getElementById('prev-q-btn')?.addEventListener('click', () => {
     if (currentQuestionIndex > 0) {
@@ -1385,46 +1404,46 @@ function setupJLPTActions() {
       renderTestQuestion();
     }
   });
-  
+
   document.getElementById('next-q-btn')?.addEventListener('click', () => {
     if (currentQuestionIndex < currentTestQuestions.length - 1) {
       currentQuestionIndex++;
       renderTestQuestion();
     }
   });
-  
+
   document.getElementById('exit-test-btn')?.addEventListener('click', () => {
     if (confirm('Exit test? Your progress will be lost.')) {
       exitTest();
     }
   });
-  
+
   document.getElementById('finish-test-btn')?.addEventListener('click', () => {
     finishTest();
   });
-  
+
   document.getElementById('new-test-btn')?.addEventListener('click', () => {
     document.getElementById('test-results').classList.add('hidden');
+    document.getElementById('test-count-selector').classList.add('hidden');
     document.getElementById('test-levels').classList.remove('hidden');
   });
 }
 
 function loadJLPTTests() {
-  // Show level selection by default
   document.getElementById('test-levels').classList.remove('hidden');
+  document.getElementById('test-count-selector').classList.add('hidden');
   document.getElementById('active-test').classList.add('hidden');
   document.getElementById('test-results').classList.add('hidden');
-  
   setupJLPTActions();
 }
 
-async function startJLPTTest(level) {
+async function startJLPTTest(level, count = 20) {
   showLoading();
-  
+
   try {
     const data = await apiRequest('/jlpt/start', {
       method: 'POST',
-      body: JSON.stringify({ level, section: '' })
+      body: JSON.stringify({ level, section: '', count })
     });
     
     currentTestSession = data.data.session;
@@ -1433,8 +1452,9 @@ async function startJLPTTest(level) {
     testAnswers = {};
     testStartTime = Date.now();
     
-    // Hide levels, show test
+    // Hide level/count UI, show test
     document.getElementById('test-levels').classList.add('hidden');
+    document.getElementById('test-count-selector').classList.add('hidden');
     document.getElementById('active-test').classList.remove('hidden');
     document.getElementById('test-results').classList.add('hidden');
     
@@ -2297,32 +2317,73 @@ function submitReadingAnswers() {
 // ==================== WEAK POINTS DRILL ====================
 
 function setupWeakPointsActions() {
-  // This will be integrated with conjugation and other drills
-  // to auto-generate focused practice sessions
+  document.getElementById('conj-weak-points-btn')?.addEventListener('click', showWeakPointsPanel);
+  document.getElementById('close-weak-points')?.addEventListener('click', hideWeakPointsPanel);
+  document.getElementById('start-weak-drill-btn')?.addEventListener('click', startWeakPointsDrill);
+}
+
+function showWeakPointsPanel() {
+  const panel = document.getElementById('weak-points-panel');
+  if (panel) {
+    panel.classList.remove('hidden');
+    loadWeakPoints();
+  }
+}
+
+function hideWeakPointsPanel() {
+  document.getElementById('weak-points-panel')?.classList.add('hidden');
+}
+
+async function loadWeakPoints() {
+  const list = document.getElementById('weak-points-list');
+  const drillBtn = document.getElementById('start-weak-drill-btn');
+  if (!list) return;
+
+  list.innerHTML = '<p class="loading-text">Loading your weak areas...</p>';
+  drillBtn?.classList.add('hidden');
+
+  try {
+    const data = await apiRequest('/conjugation/weak-points');
+    const weakPoints = data.data?.weak_points || data.data || [];
+
+    if (!weakPoints.length) {
+      list.innerHTML = '<p class="empty-text">No weak points yet — keep practicing!</p>';
+      return;
+    }
+
+    list.innerHTML = weakPoints.map(wp => `
+      <div class="weak-point-row">
+        <span class="weak-point-form">${wp.form || wp.form_type || wp.name}</span>
+        <div class="weak-point-bar-wrap">
+          <div class="weak-point-bar" style="width:${Math.round(wp.accuracy || 0)}%"></div>
+        </div>
+        <span class="weak-point-pct">${Math.round(wp.accuracy || 0)}%</span>
+        <span class="weak-point-count">${wp.count || wp.attempts || 0} attempts</span>
+      </div>
+    `).join('');
+
+    drillBtn?.classList.remove('hidden');
+  } catch (error) {
+    list.innerHTML = '<p class="error-text">Failed to load weak points.</p>';
+    console.error('Failed to load weak points:', error);
+  }
 }
 
 async function startWeakPointsDrill() {
-  // Analyze user's performance data
-  // Find lowest accuracy areas
-  // Generate targeted drill
   showLoading();
-  
+  hideWeakPointsPanel();
+
   try {
-    // Fetch user's accuracy stats from backend
-    // const stats = await apiRequest('/drill/weak-points');
-    
-    // For now, show mock weak points
-    const weakPoints = [
-      { form: '受身形', accuracy: 45, count: 20 },
-      { form: '使役形', accuracy: 52, count: 15 },
-      { form: '意向形', accuracy: 60, count: 12 }
-    ];
-    
-    // Could show a modal or dedicated view with weak points
-    // and button to start focused drill
-    
+    const data = await apiRequest('/conjugation/weak-points/drill', { method: 'POST' });
+    // Weak point drill reuses the same drill UI
+    const session = data.data;
+    if (session?.questions) {
+      startDrillFromSession(session);
+    } else {
+      showError('No drill available — practice more first!');
+    }
   } catch (error) {
-    console.error('Failed to load weak points:', error);
+    showError('Failed to start weak points drill: ' + error.message);
   } finally {
     hideLoading();
   }
