@@ -506,7 +506,7 @@ h1, h2, h3 {
 
 /* Conjugation Box */
 .conjugation-box {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: var(--space-md);
@@ -523,7 +523,7 @@ h1, h2, h3 {
 }
 
 .example-item {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: var(--space-md);
@@ -1289,17 +1289,6 @@ h1, h2, h3 {
 }
 
 /* Force light mode - clean white like portfolio */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #ffffff;
-    --surface: #fafafa;
-    --surface-hover: #f5f5f5;
-    --border: #e8e8e8;
-    --text: #1a1a1a;
-    --text-2: #666666;
-    --text-3: #999999;
-  }
-}
 
 /* SRS Review Styles */
 .review-count {
@@ -2120,12 +2109,12 @@ h1, h2, h3 {
 
 .conj-input.correct {
   border-color: var(--success);
-  background: #f0fff4;
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
 }
 
 .conj-input.incorrect {
   border-color: #e74c3c;
-  background: #fff5f5;
+  background: color-mix(in srgb, #e74c3c 10%, var(--surface));
 }
 
 .conj-feedback {
@@ -2136,12 +2125,12 @@ h1, h2, h3 {
 }
 
 .conj-feedback.correct {
-  background: #f0fff4;
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
   border: 1px solid var(--success);
 }
 
 .conj-feedback.incorrect {
-  background: #fff5f5;
+  background: color-mix(in srgb, #e74c3c 10%, var(--surface));
   border: 1px solid #e74c3c;
 }
 
@@ -2700,7 +2689,7 @@ h1, h2, h3 {
   width: 300px;
   height: 300px;
   margin: 0 auto var(--space-lg);
-  background: #fff;
+  background: var(--bg);
   border: 2px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
