@@ -3097,13 +3097,16 @@ function setupThemeToggle() {
   if (savedTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
     updateThemeIcon(true);
+  } else if (savedTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    updateThemeIcon(false);
   }
-  
+
   toggle.addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    
+
     if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.setAttribute('data-theme', 'light');
       localStorage.setItem('kotoba-theme', 'light');
       updateThemeIcon(false);
     } else {
@@ -3117,9 +3120,16 @@ function setupThemeToggle() {
 function updateThemeIcon(isDark) {
   const icon = document.querySelector('#theme-toggle .nav-icon');
   const label = document.querySelector('#theme-toggle .nav-label');
-  
   if (icon) icon.textContent = isDark ? '☀️' : '🌙';
   if (label) label.textContent = isDark ? 'Light' : 'Dark';
+
+  const moreBtn = document.getElementById('more-theme-btn');
+  if (moreBtn) {
+    const moreIcon = moreBtn.querySelector('.more-item-icon');
+    const moreLabel = moreBtn.querySelector('.more-item-label');
+    if (moreIcon) moreIcon.textContent = isDark ? '☀️' : '🌙';
+    if (moreLabel) moreLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  }
 }
 
 // Service Worker for PWA

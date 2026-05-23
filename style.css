@@ -35,20 +35,54 @@
   --font-jp: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
 }
 
-/* Dark Mode Theme */
-[data-theme="dark"] {
+/* Dark Mode Theme — html[] gives higher specificity than :root so it wins everywhere */
+html[data-theme="dark"] {
   --bg: #1a1a1a;
-  --surface: #2a2a2a;
-  --surface-hover: #333333;
-  --border: #404040;
+  --surface: #242424;
+  --surface-hover: #2e2e2e;
+  --border: #3a3a3a;
   --text: #f0f0f0;
   --text-2: #b0b0b0;
-  --text-3: #808080;
-  --accent: #4a7fc0;
-  --accent-hover: #5a8fd0;
+  --text-3: #707070;
+  --accent: #5a8fd0;
+  --accent-hover: #6a9fe0;
   --warning: #f39c12;
   --warning-bg: #3d2e1a;
   --success: #2ecc71;
+  color-scheme: dark;
+}
+
+/* Explicit light override (used when system is dark but user toggles light) */
+html[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #fafafa;
+  --surface-hover: #f5f5f5;
+  --border: #e8e8e8;
+  --text: #1a1a1a;
+  --text-2: #666666;
+  --text-3: #999999;
+  --accent: #2c5aa0;
+  --accent-hover: #1a3d6e;
+  color-scheme: light;
+}
+
+/* Follow system preference automatically when no manual theme is set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #1a1a1a;
+    --surface: #242424;
+    --surface-hover: #2e2e2e;
+    --border: #3a3a3a;
+    --text: #f0f0f0;
+    --text-2: #b0b0b0;
+    --text-3: #707070;
+    --accent: #5a8fd0;
+    --accent-hover: #6a9fe0;
+    --warning: #f39c12;
+    --warning-bg: #3d2e1a;
+    --success: #2ecc71;
+    color-scheme: dark;
+  }
 }
 
 * {
