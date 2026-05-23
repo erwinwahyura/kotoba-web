@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupWeakPointsActions();
   setupGoalsActions();
   setupListeningActions();
+  setupGrammarQuiz();
   setupThemeToggle();
   
   // Goals button
@@ -170,8 +171,48 @@ function setupNavigation() {
       switchView(view);
     });
   });
-  
+
+  // Mobile bottom nav
+  document.querySelectorAll('.bottom-nav-btn[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  document.getElementById('more-btn')?.addEventListener('click', openMoreDrawer);
+  document.getElementById('more-backdrop')?.addEventListener('click', closeMoreDrawer);
+
+  document.querySelectorAll('.more-item[data-view]').forEach(item => {
+    item.addEventListener('click', () => {
+      switchView(item.dataset.view);
+      closeMoreDrawer();
+    });
+  });
+
+  document.getElementById('more-goals-btn')?.addEventListener('click', () => {
+    showGoalsModal();
+    closeMoreDrawer();
+  });
+
+  document.getElementById('more-theme-btn')?.addEventListener('click', () => {
+    document.getElementById('theme-toggle')?.click();
+    closeMoreDrawer();
+  });
+
+  document.getElementById('more-logout-btn')?.addEventListener('click', () => {
+    closeMoreDrawer();
+    logout();
+  });
+
   document.getElementById('logout-btn').addEventListener('click', logout);
+}
+
+function openMoreDrawer() {
+  document.getElementById('more-backdrop')?.classList.remove('hidden');
+  document.getElementById('more-drawer')?.classList.remove('hidden');
+}
+
+function closeMoreDrawer() {
+  document.getElementById('more-backdrop')?.classList.add('hidden');
+  document.getElementById('more-drawer')?.classList.add('hidden');
 }
 
 // SRS State
@@ -182,8 +223,8 @@ let currentReviewItem = null;
 function switchView(view) {
   currentView = view;
   
-  // Update nav buttons
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+  // Update nav buttons (header + bottom nav)
+  document.querySelectorAll('.nav-btn, .bottom-nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === view);
   });
   
@@ -432,6 +473,124 @@ function displayGrammar(pattern, progress) {
   } else {
     relatedSection.classList.add('hidden');
   }
+
+  // Show/hide quiz button and reset panel
+  const quizBtn = document.getElementById('grammar-quiz-btn');
+  const quizPanel = document.getElementById('grammar-quiz-panel');
+  if (pattern.quiz_questions && pattern.quiz_questions.length > 0) {
+    quizBtn?.classList.remove('hidden');
+  } else {
+    quizBtn?.classList.add('hidden');
+  }
+  quizPanel?.classList.add('hidden');
+}
+
+// ── Grammar Quiz ────────────────────────────────────────────
+
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+function setupGrammarQuiz() {
+  document.getElementById('grammar-quiz-btn')?.addEventListener('click', startQuiz);
+  document.getElementById('quiz-next-btn')?.addEventListener('click', advanceQuiz);
+  document.getElementById('quiz-retry-btn')?.addEventListener('click', startQuiz);
+  document.getElementById('quiz-close-btn')?.addEventListener('click', closeQuiz);
+}
+
+function startQuiz() {
+  if (!currentGrammar?.quiz_questions?.length) return;
+
+  quizQuestions = currentGrammar.quiz_questions;
+  quizIndex = 0;
+  quizScore = 0;
+
+  const panel = document.getElementById('grammar-quiz-panel');
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const label = currentGrammar.source === 'somatome_n3'
+    ? `Sou Matome N3 — Week ${currentGrammar.somatome_week} Day ${currentGrammar.somatome_day}`
+    : 'Grammar Quiz';
+  document.getElementById('quiz-source-label').textContent = label;
+  document.getElementById('quiz-total').textContent = quizQuestions.length;
+
+  document.getElementById('quiz-result').classList.add('hidden');
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const q = quizQuestions[quizIndex];
+  document.getElementById('quiz-current').textContent = quizIndex + 1;
+  document.getElementById('quiz-progress-fill').style.width =
+    `${(quizIndex / quizQuestions.length) * 100}%`;
+
+  document.getElementById('quiz-english').textContent = q.english || '';
+  document.getElementById('quiz-question').textContent = q.question;
+  document.getElementById('quiz-feedback').classList.add('hidden');
+
+  const container = document.getElementById('quiz-options');
+  container.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.innerHTML = `<span class="quiz-option-letter">${LETTERS[i]}</span>${opt}`;
+    btn.addEventListener('click', () => selectAnswer(i, q));
+    container.appendChild(btn);
+  });
+}
+
+function selectAnswer(chosen, q) {
+  // Disable all options
+  document.querySelectorAll('.quiz-option').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct_index) btn.classList.add('correct');
+    else if (i === chosen) btn.classList.add('wrong');
+  });
+
+  const correct = chosen === q.correct_index;
+  if (correct) quizScore++;
+
+  document.getElementById('quiz-feedback-icon').textContent = correct ? '✅' : '❌';
+  document.getElementById('quiz-explanation').textContent = q.explanation;
+  document.getElementById('quiz-feedback').classList.remove('hidden');
+
+  // Auto-advance to result on last question
+  if (quizIndex === quizQuestions.length - 1) {
+    document.getElementById('quiz-next-btn').textContent = 'See Results';
+  } else {
+    document.getElementById('quiz-next-btn').textContent = 'Next Question →';
+  }
+}
+
+function advanceQuiz() {
+  quizIndex++;
+  if (quizIndex >= quizQuestions.length) {
+    showQuizResult();
+  } else {
+    renderQuizQuestion();
+  }
+}
+
+function showQuizResult() {
+  document.getElementById('quiz-options').innerHTML = '';
+  document.getElementById('quiz-feedback').classList.add('hidden');
+  document.getElementById('quiz-result').classList.remove('hidden');
+  document.getElementById('quiz-progress-fill').style.width = '100%';
+
+  const total = quizQuestions.length;
+  document.getElementById('quiz-score-number').textContent = `${quizScore}/${total}`;
+
+  let msg;
+  if (quizScore === total) msg = '完璧！ Perfect score! 🎉';
+  else if (quizScore >= total * 0.7) msg = 'よくできました！ Good job!';
+  else msg = 'もう一度やってみよう！ Try again!';
+  document.getElementById('quiz-score-msg').textContent = msg;
+}
+
+function closeQuiz() {
+  document.getElementById('grammar-quiz-panel').classList.add('hidden');
 }
 
 // Progress
@@ -2708,9 +2867,15 @@ async function startListeningExercise(exerciseId) {
     document.getElementById('listening-results').classList.add('hidden');
     
     document.getElementById('listening-title').textContent = currentListeningExercise.title;
-    
-    // Setup audio
-    setupListeningAudio(currentListeningExercise.audio_url);
+
+    // Resolve audio — use browser TTS for placeholder URLs (no ElevenLabs key configured)
+    const audioUrl = currentListeningExercise.audio_url;
+    if (audioUrl && !audioUrl.includes('example.com')) {
+      setupListeningAudio(audioUrl);
+    } else {
+      // No real audio — wire play button to browser speech synthesis
+      setupBrowserTTSAudio(currentListeningExercise.transcript);
+    }
     
     // Render content
     renderListeningQuestions(currentListeningExercise.questions);
@@ -2726,28 +2891,63 @@ async function startListeningExercise(exerciseId) {
   }
 }
 
+let listeningUseBrowserTTS = false;
+let listeningTranscript = '';
+
+function setupBrowserTTSAudio(transcript) {
+  listeningUseBrowserTTS = true;
+  listeningTranscript = transcript;
+  // Hide the audio element controls since we use browser TTS
+  const audioElement = document.getElementById('listening-audio');
+  if (audioElement) audioElement.style.display = 'none';
+  const timeEl = document.getElementById('audio-time');
+  if (timeEl) timeEl.textContent = '▶ Press Play';
+}
+
 function setupListeningAudio(url) {
-  listeningAudio = new Audio(url);
+  listeningUseBrowserTTS = false;
+  const origin = new URL(API_URL).origin;
+  const fullUrl = url.startsWith('http') ? url : `${origin}${url}`;
+
+  listeningAudio = new Audio(fullUrl);
   listeningAudio.addEventListener('timeupdate', updateAudioTime);
   listeningAudio.addEventListener('loadedmetadata', updateAudioTime);
-  
+
   const audioElement = document.getElementById('listening-audio');
   if (audioElement) {
-    audioElement.src = url;
+    audioElement.style.display = '';
+    audioElement.src = fullUrl;
   }
 }
 
 function playListeningAudio() {
-  if (listeningAudio) listeningAudio.play();
-  document.getElementById('listening-audio')?.play();
+  if (listeningUseBrowserTTS) {
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(listeningTranscript);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 0.8;
+    speechSynthesis.speak(utterance);
+    return;
+  }
+  if (listeningAudio) {
+    listeningAudio.play().catch(err => {
+      console.error('Listening audio playback failed:', err);
+      showError('Failed to play audio');
+    });
+  }
 }
 
 function pauseListeningAudio() {
+  if (listeningUseBrowserTTS) {
+    speechSynthesis.pause();
+    return;
+  }
   if (listeningAudio) listeningAudio.pause();
-  document.getElementById('listening-audio')?.pause();
 }
 
 function stopListeningAudio() {
+  listeningUseBrowserTTS = false;
+  speechSynthesis.cancel();
   if (listeningAudio) {
     listeningAudio.pause();
     listeningAudio.currentTime = 0;

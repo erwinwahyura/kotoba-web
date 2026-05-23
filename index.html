@@ -224,15 +224,41 @@
           </div>
           
           <div class="actions">
-            <button type="button" class="btn btn-secondary" id="prev-grammar-btn">
-              ← Previous
-            </button>
-            <button type="button" class="btn btn-accent" id="compare-grammar-btn">
-              Compare Patterns
-            </button>
-            <button type="button" class="btn btn-primary" id="next-grammar-btn">
-              Next →
-            </button>
+            <button type="button" class="btn btn-secondary" id="prev-grammar-btn">← Previous</button>
+            <button type="button" class="btn btn-accent" id="grammar-quiz-btn">✏ Quiz</button>
+            <button type="button" class="btn btn-primary" id="next-grammar-btn">Next →</button>
+          </div>
+
+          <!-- Quiz Panel -->
+          <div class="quiz-panel hidden" id="grammar-quiz-panel">
+            <div class="quiz-header">
+              <div class="quiz-source" id="quiz-source-label"></div>
+              <div class="quiz-progress">
+                <span id="quiz-current">1</span> / <span id="quiz-total">3</span>
+              </div>
+            </div>
+            <div class="quiz-progress-bar">
+              <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+            </div>
+            <div class="quiz-question-wrap">
+              <div class="quiz-english" id="quiz-english"></div>
+              <div class="quiz-question" id="quiz-question"></div>
+            </div>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div class="quiz-feedback hidden" id="quiz-feedback">
+              <div class="quiz-feedback-icon" id="quiz-feedback-icon"></div>
+              <div class="quiz-explanation" id="quiz-explanation"></div>
+              <button class="btn btn-primary" id="quiz-next-btn">Next Question →</button>
+            </div>
+            <div class="quiz-result hidden" id="quiz-result">
+              <div class="quiz-score-display">
+                <div class="quiz-score-number" id="quiz-score-number"></div>
+                <div class="quiz-score-label">correct</div>
+              </div>
+              <div class="quiz-score-msg" id="quiz-score-msg"></div>
+              <button class="btn btn-secondary" id="quiz-retry-btn">Try Again</button>
+              <button class="btn btn-primary" id="quiz-close-btn">Back to Pattern</button>
+            </div>
           </div>
         </div>
 
@@ -816,6 +842,78 @@
           </div>
         </div>
       </main>
+
+      <!-- Mobile Bottom Nav -->
+      <nav class="bottom-nav">
+        <button class="bottom-nav-btn active" data-view="vocab">
+          <span class="bottom-nav-icon">語</span>
+          <span class="bottom-nav-label">Vocab</span>
+        </button>
+        <button class="bottom-nav-btn" data-view="grammar">
+          <span class="bottom-nav-icon">文</span>
+          <span class="bottom-nav-label">Grammar</span>
+        </button>
+        <button class="bottom-nav-btn" data-view="srs">
+          <span class="bottom-nav-icon">復</span>
+          <span class="bottom-nav-label">Review</span>
+        </button>
+        <button class="bottom-nav-btn" data-view="kanji">
+          <span class="bottom-nav-icon">漢</span>
+          <span class="bottom-nav-label">Kanji</span>
+        </button>
+        <button class="bottom-nav-btn" id="more-btn">
+          <span class="bottom-nav-icon">···</span>
+          <span class="bottom-nav-label">More</span>
+        </button>
+      </nav>
+
+      <!-- More Drawer -->
+      <div class="more-backdrop hidden" id="more-backdrop"></div>
+      <div class="more-drawer hidden" id="more-drawer">
+        <div class="more-drawer-handle"></div>
+        <div class="more-grid">
+          <button class="more-item" data-view="listening">
+            <span class="more-icon">🔊</span>
+            <span class="more-label">Listen</span>
+          </button>
+          <button class="more-item" data-view="reading">
+            <span class="more-icon">読</span>
+            <span class="more-label">Read</span>
+          </button>
+          <button class="more-item" data-view="conjugation">
+            <span class="more-icon">活</span>
+            <span class="more-label">Conjugation</span>
+          </button>
+          <button class="more-item" data-view="compare">
+            <span class="more-icon">比</span>
+            <span class="more-label">Compare</span>
+          </button>
+          <button class="more-item" data-view="tests">
+            <span class="more-icon">試</span>
+            <span class="more-label">Tests</span>
+          </button>
+          <button class="more-item" data-view="search">
+            <span class="more-icon">検</span>
+            <span class="more-label">Search</span>
+          </button>
+          <button class="more-item" data-view="progress">
+            <span class="more-icon">進</span>
+            <span class="more-label">Progress</span>
+          </button>
+          <button class="more-item" id="more-goals-btn">
+            <span class="more-icon">🎯</span>
+            <span class="more-label">Goals</span>
+          </button>
+          <button class="more-item" id="more-theme-btn">
+            <span class="more-icon">🌙</span>
+            <span class="more-label">Theme</span>
+          </button>
+          <button class="more-item" id="more-logout-btn">
+            <span class="more-icon">→</span>
+            <span class="more-label">Logout</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Loading Overlay -->
