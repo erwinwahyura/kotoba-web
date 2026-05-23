@@ -790,8 +790,8 @@ function setupActions() {
     showLoading();
     try {
       const data = await apiRequest(`/grammar/${prevId}`);
-      currentGrammar = data.data;
-      displayGrammar(data.data, {});
+      currentGrammar = data.data.pattern;
+      displayGrammar(data.data.pattern, {});
     } catch (error) {
       console.error('Failed to load previous grammar:', error);
       showError('Failed to load previous pattern');
@@ -1915,8 +1915,8 @@ async function loadGrammarDetail(id) {
   showLoading();
   try {
     const data = await apiRequest(`/grammar/${id}`);
-    currentGrammar = data.data;
-    
+    currentGrammar = data.data.pattern;
+
     // Switch to grammar view and display
     switchView('grammar');
     displayGrammar(currentGrammar, {});
