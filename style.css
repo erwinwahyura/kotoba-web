@@ -1068,8 +1068,18 @@ h1, h2, h3 {
   }
 }
 
-/* Mobile — iPhone 12 Pro and similar (≤480px) */
-@media (max-width: 480px) {
+/* ── Bottom Nav (hidden on desktop) ─────────────────────────── */
+.bottom-nav {
+  display: none;
+}
+
+.more-drawer,
+.more-backdrop {
+  display: none;
+}
+
+/* Mobile — phones (≤768px) */
+@media (max-width: 768px) {
   /* Prevent horizontal scroll */
   body {
     overflow-x: hidden;
@@ -1276,16 +1286,6 @@ h1, h2, h3 {
     align-items: center;
     justify-content: center;
   }
-}
-
-/* ── Bottom Nav (hidden on desktop) ─────────────────────────── */
-.bottom-nav {
-  display: none;
-}
-
-.more-drawer,
-.more-backdrop {
-  display: none;
 }
 
 /* Force light mode - clean white like portfolio */
