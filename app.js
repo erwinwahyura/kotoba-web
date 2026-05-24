@@ -1729,11 +1729,13 @@ async function finishTest() {
     document.getElementById('test-results').classList.remove('hidden');
     
     // Populate results
-    document.getElementById('result-score').textContent = 
-      `${data.correct_count}/${data.total_questions} (${Math.round(data.percentage)}%)`;
-    document.getElementById('result-passed').textContent = data.passed ? 'PASSED ✓' : 'FAILED ✗';
-    document.getElementById('result-passed').className = 
-      `result-passed ${data.passed ? 'passed' : 'failed'}`;
+    const percentage = Math.round(data.percentage);
+    const passed = percentage >= 70;
+    document.getElementById('result-score').textContent =
+      `${data.correct_count}/${data.total_questions} (${percentage}%)`;
+    document.getElementById('result-passed').textContent = passed ? 'PASSED ✓' : 'FAILED ✗';
+    document.getElementById('result-passed').className =
+      `result-passed ${passed ? 'passed' : 'failed'}`;
     document.getElementById('result-correct').textContent = data.correct_count;
     document.getElementById('result-wrong').textContent = data.incorrect_count;
     document.getElementById('result-time').textContent = data.time_spent;
