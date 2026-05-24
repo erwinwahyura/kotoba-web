@@ -3119,8 +3119,44 @@ function updateThemeIcon(isDark) {
 // Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(err => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(() => newSW.postMessage({ type: 'SKIP_WAITING' }));
+          }
+        });
+      });
+    }).catch(err => {
       console.log('SW registration failed:', err);
     });
+
+    // Reload when the new SW takes control so fresh assets load
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  });
+}
+
+function showUpdateBanner(onAccept) {
+  if (document.getElementById('update-banner')) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.className = 'update-banner';
+  banner.innerHTML = `
+    <span class="update-banner-text">New version available</span>
+    <button class="update-banner-btn" id="update-accept-btn">Update</button>
+    <button class="update-banner-dismiss" id="update-dismiss-btn">✕</button>
+  `;
+  document.body.appendChild(banner);
+
+  document.getElementById('update-accept-btn').addEventListener('click', () => {
+    banner.remove();
+    onAccept();
+  });
+  document.getElementById('update-dismiss-btn').addEventListener('click', () => {
+    banner.remove();
   });
 }
