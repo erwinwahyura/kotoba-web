@@ -1504,6 +1504,15 @@ function addTTSButtonsToExamples() {
   });
 }
 
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 // JLPT Test Functions
 let currentTestSession = null;
 let currentTestQuestions = [];
@@ -1577,7 +1586,6 @@ function loadJLPTTests() {
   document.getElementById('test-count-selector').classList.add('hidden');
   document.getElementById('active-test').classList.add('hidden');
   document.getElementById('test-results').classList.add('hidden');
-  setupJLPTActions();
 }
 
 async function startJLPTTest(level, count = 20) {
@@ -1590,7 +1598,7 @@ async function startJLPTTest(level, count = 20) {
     });
     
     currentTestSession = data.data.session;
-    currentTestQuestions = data.data.questions;
+    currentTestQuestions = shuffleArray(data.data.questions);
     currentQuestionIndex = 0;
     testAnswers = {};
     testStartTime = Date.now();
