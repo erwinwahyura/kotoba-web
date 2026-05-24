@@ -6,7 +6,7 @@ let token = localStorage.getItem('kotoba_token');
 let currentView = 'vocab';
 let currentWord = null;
 let currentGrammar = null;
-let grammarHistory = []; // stack of previously viewed grammar IDs
+let grammarList = [];
 
 // DOM Elements
 const authScreen = document.getElementById('auth-screen');
@@ -356,16 +356,29 @@ function displayWord(word, progress) {
 }
 
 // Grammar
+async function loadGrammarList(level) {
+  try {
+    const data = await apiRequest(`/grammar/level/${level}?limit=200`);
+    grammarList = data.data.patterns || [];
+    const select = document.getElementById('grammar-select');
+    if (!select) return;
+    select.innerHTML = grammarList.map(p =>
+      `<option value="${p.id}">${p.pattern} — ${p.meaning}</option>`
+    ).join('');
+    if (currentGrammar) select.value = currentGrammar.id;
+  } catch (error) {
+    console.error('Failed to load grammar list:', error);
+  }
+}
+
 async function loadDailyGrammar() {
   showLoading();
 
   try {
     const data = await apiRequest('/grammar/daily');
-    if (currentGrammar && currentGrammar.id) {
-      grammarHistory.push(currentGrammar.id);
-    }
     currentGrammar = data.data.pattern;
     displayGrammar(data.data.pattern, data.data.progress);
+    loadGrammarList(data.data.pattern.jlpt_level);
   } catch (error) {
     console.error('Failed to load grammar:', error);
     // Check if it's "not found" error (no patterns for this level)
@@ -396,6 +409,8 @@ function displayGrammar(pattern, progress) {
   grammarLevel.textContent = pattern.jlpt_level;
   grammarLevel.className = `level-badge ${pattern.jlpt_level.toLowerCase()}`;
   grammarPattern.textContent = pattern.pattern;
+  const grammarSelect = document.getElementById('grammar-select');
+  if (grammarSelect && pattern.id) grammarSelect.value = pattern.id;
   
   const grammarMeaning = document.getElementById('grammar-meaning');
   const grammarConjugation = document.getElementById('grammar-conjugation');
@@ -778,49 +793,18 @@ function setupActions() {
     }
   });
   
-  // Grammar actions
-  document.getElementById('prev-grammar-btn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    if (!currentGrammar) return;
-    if (grammarHistory.length === 0) {
-      showError('No previous pattern in this session');
-      return;
-    }
-    const prevId = grammarHistory.pop();
+  // Grammar pattern select
+  document.getElementById('grammar-select').addEventListener('change', async (e) => {
+    const id = e.target.value;
+    if (!id) return;
     showLoading();
     try {
-      const data = await apiRequest(`/grammar/${prevId}`);
+      const data = await apiRequest(`/grammar/${id}`);
       currentGrammar = data.data.pattern;
       displayGrammar(data.data.pattern, {});
     } catch (error) {
-      console.error('Failed to load previous grammar:', error);
-      showError('Failed to load previous pattern');
-      grammarHistory.push(prevId); // restore on error
-    } finally {
-      hideLoading();
-    }
-  });
-  
-  document.getElementById('next-grammar-btn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    
-    if (!currentGrammar) {
-      showError('No grammar pattern loaded');
-      return;
-    }
-    
-    showLoading();
-    try {
-      // Advance to next pattern
-      await apiRequest(`/grammar/${currentGrammar.id}/skip`, {
-        method: 'POST',
-        body: JSON.stringify({ status: 'studied' })
-      });
-      
-      await loadDailyGrammar();
-    } catch (error) {
-      console.error('Failed to save grammar progress:', error);
-      showError('Failed: ' + (error.message || 'Unknown error'));
+      console.error('Failed to load grammar pattern:', error);
+      showError('Failed to load pattern');
     } finally {
       hideLoading();
     }

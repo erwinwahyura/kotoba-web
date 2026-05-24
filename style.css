@@ -639,6 +639,26 @@ h1, h2, h3 {
   flex: 1;
 }
 
+.grammar-select-wrapper {
+  margin-top: var(--space-xl);
+}
+
+.grammar-select {
+  width: 100%;
+  padding: var(--space-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.grammar-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
