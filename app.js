@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupGoalsActions();
   setupListeningActions();
   setupGrammarQuiz();
+  setupStudyActions();
   setupThemeToggle();
   
   // Goals button
@@ -268,6 +269,7 @@ function switchView(view) {
     stopListeningAudio();
   }
   if (view === 'progress') loadProgress();
+  if (view === 'study') loadStudyView();
 }
 
 // API Calls
@@ -3169,4 +3171,345 @@ function showUpdateBanner(onAccept) {
   document.getElementById('update-dismiss-btn').addEventListener('click', () => {
     banner.remove();
   });
+}
+
+// =====================================================
+// STUDY — Sou Matome N3 Personal Mastery System
+// =====================================================
+
+const STUDY_STORAGE_KEY = 'kotoba_study_progress';
+
+function getStudyProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(STUDY_STORAGE_KEY)) || defaultStudyProgress();
+  } catch { return defaultStudyProgress(); }
+}
+
+function defaultStudyProgress() {
+  return {
+    version: 'v001',
+    versionNum: 1,
+    weeks: {
+      1: { unlocked: true, articleRead: false, compareRead: false, storyRead: false, attempts: [], bestScore: null },
+      2: { unlocked: false, articleRead: false, compareRead: false, storyRead: false, attempts: [], bestScore: null },
+      3: { unlocked: false, articleRead: false, compareRead: false, storyRead: false, attempts: [], bestScore: null },
+      4: { unlocked: false, articleRead: false, compareRead: false, storyRead: false, attempts: [], bestScore: null },
+      5: { unlocked: false, articleRead: false, compareRead: false, storyRead: false, attempts: [], bestScore: null },
+      6: { unlocked: false, articleRead: false, compareRead: false, storyRead: false, attempts: [], bestScore: null },
+    },
+    weaknesses: []
+  };
+}
+
+function saveStudyProgress(p) {
+  localStorage.setItem(STUDY_STORAGE_KEY, JSON.stringify(p));
+}
+
+function bumpStudyVersion(p) {
+  p.versionNum = (p.versionNum || 1) + 1;
+  p.version = 'v' + String(p.versionNum).padStart(3, '0');
+}
+
+let studyCurrentWeek = null;
+let sqQuestions = [];
+let sqIndex = 0;
+let sqScore = 0;
+let sqWrong = [];
+
+function setupStudyActions() {
+  document.getElementById('study-back-btn')?.addEventListener('click', () => {
+    showStudyHome();
+  });
+  document.getElementById('study-weaknesses-open-btn')?.addEventListener('click', () => {
+    showStudyWeaknesses();
+  });
+  document.getElementById('study-weaknesses-back-btn')?.addEventListener('click', () => {
+    showStudyHome();
+  });
+  document.querySelectorAll('.study-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const t = tab.dataset.stab;
+      switchStudyTab(t);
+    });
+  });
+  document.getElementById('sq-next-btn')?.addEventListener('click', advanceStudyQuiz);
+  document.getElementById('sq-retry-btn')?.addEventListener('click', () => {
+    startStudyQuiz(studyCurrentWeek);
+  });
+}
+
+function loadStudyView() {
+  showStudyHome();
+}
+
+function showStudyHome() {
+  document.getElementById('study-home').classList.remove('hidden');
+  document.getElementById('study-week-detail').classList.add('hidden');
+  document.getElementById('study-weaknesses-detail').classList.add('hidden');
+  renderStudyHome();
+}
+
+function renderStudyHome() {
+  const p = getStudyProgress();
+  document.getElementById('study-version-badge').textContent = p.version;
+
+  // Overall progress
+  const totalWeeks = LESSONS_DATA.weeks.length;
+  const completedWeeks = Object.values(p.weeks).filter(w => w.bestScore !== null && w.bestScore >= 70).length;
+  const pct = Math.round((completedWeeks / totalWeeks) * 100);
+  document.getElementById('study-current-week-num').textContent = Math.min(completedWeeks + 1, totalWeeks);
+  document.getElementById('study-overall-pct').textContent = pct;
+  document.getElementById('study-overall-fill').style.width = pct + '%';
+
+  // Week cards
+  const grid = document.getElementById('study-weeks-grid');
+  grid.innerHTML = '';
+  LESSONS_DATA.weeks.forEach(w => {
+    const wp = p.weeks[w.week] || {};
+    const unlocked = wp.unlocked;
+    const best = wp.bestScore;
+    const passed = best !== null && best >= 70;
+
+    const card = document.createElement('div');
+    card.className = 'study-week-card' + (unlocked ? '' : ' locked') + (passed ? ' completed' : '');
+    card.innerHTML = `
+      <div class="study-week-card-accent"></div>
+      <div class="study-week-num">Week ${w.week}</div>
+      <div class="study-week-title-card">${w.theme}</div>
+      ${best !== null
+        ? `<div class="study-week-score">Best: ${best}%</div>`
+        : unlocked
+          ? `<div class="study-week-patterns">${w.patterns.length} patterns</div>`
+          : `<div class="study-week-lock">🔒</div>`
+      }
+    `;
+    if (unlocked) {
+      card.addEventListener('click', () => openStudyWeek(w.week));
+    }
+    grid.appendChild(card);
+  });
+
+  // Weaknesses summary
+  const ws = document.getElementById('study-weakness-summary');
+  const active = p.weaknesses.filter(w => w.status === 'active');
+  if (active.length > 0) {
+    ws.classList.remove('hidden');
+    document.getElementById('study-weakness-count-label').textContent =
+      `${active.length} weakness${active.length > 1 ? 'es' : ''} to review`;
+  } else {
+    ws.classList.add('hidden');
+  }
+}
+
+function openStudyWeek(weekNum) {
+  studyCurrentWeek = weekNum;
+  const weekData = LESSONS_DATA.weeks.find(w => w.week === weekNum);
+  if (!weekData) return;
+
+  document.getElementById('study-home').classList.add('hidden');
+  document.getElementById('study-week-detail').classList.remove('hidden');
+  document.getElementById('study-week-title').textContent = `Week ${weekNum} — ${weekData.title}`;
+
+  // Populate panes
+  document.getElementById('study-article-pane').innerHTML = weekData.article;
+  document.getElementById('study-compare-pane').innerHTML = weekData.compare;
+  document.getElementById('study-story-pane').innerHTML = weekData.story;
+
+  // Story highlight tooltips
+  document.querySelectorAll('.sl-hl').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.sl-hl.show-tip').forEach(o => { if (o !== el) o.classList.remove('show-tip'); });
+      el.classList.toggle('show-tip');
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.sl-hl.show-tip').forEach(o => o.classList.remove('show-tip'));
+  }, { once: false });
+
+  // Switch to article tab by default
+  switchStudyTab('article');
+
+  // Mark reads on tab switch
+  document.querySelectorAll('.study-tab').forEach(tab => {
+    tab.addEventListener('click', () => markTabRead(weekNum, tab.dataset.stab));
+  });
+}
+
+function markTabRead(weekNum, tab) {
+  const p = getStudyProgress();
+  const wp = p.weeks[weekNum];
+  if (!wp) return;
+  const key = tab + 'Read';
+  if (!wp[key]) {
+    wp[key] = true;
+    saveStudyProgress(p);
+  }
+}
+
+function switchStudyTab(tab) {
+  document.querySelectorAll('.study-tab').forEach(t => t.classList.toggle('active', t.dataset.stab === tab));
+  ['article','compare','story','quiz'].forEach(t => {
+    const el = document.getElementById(`study-${t}-pane`);
+    el?.classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'quiz' && studyCurrentWeek) {
+    const p = getStudyProgress();
+    const wp = p.weeks[studyCurrentWeek];
+    if (wp && wp.attempts.length === 0) {
+      startStudyQuiz(studyCurrentWeek);
+    } else {
+      // Show existing result or allow retry
+      const weekData = LESSONS_DATA.weeks.find(w => w.week === studyCurrentWeek);
+      if (weekData) startStudyQuiz(studyCurrentWeek);
+    }
+  }
+}
+
+function startStudyQuiz(weekNum) {
+  const weekData = LESSONS_DATA.weeks.find(w => w.week === weekNum);
+  if (!weekData) return;
+
+  sqQuestions = shuffleArray(weekData.quiz);
+  sqIndex = 0;
+  sqScore = 0;
+  sqWrong = [];
+
+  document.getElementById('study-quiz-active').classList.remove('hidden');
+  document.getElementById('study-quiz-result').classList.add('hidden');
+  document.getElementById('sq-total').textContent = sqQuestions.length;
+  renderStudyQuestion();
+}
+
+function renderStudyQuestion() {
+  const q = sqQuestions[sqIndex];
+  document.getElementById('sq-num').textContent = sqIndex + 1;
+  document.getElementById('sq-score-live').textContent = `Score: ${sqScore}`;
+  document.getElementById('sq-bar-fill').style.width = `${(sqIndex / sqQuestions.length) * 100}%`;
+  document.getElementById('sq-ctx').textContent = q.ctx || '';
+  document.getElementById('sq-q').textContent = q.q;
+  document.getElementById('sq-feedback').classList.add('hidden');
+  document.getElementById('sq-next-btn').classList.add('hidden');
+
+  const container = document.getElementById('sq-options');
+  container.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sq-option';
+    btn.innerHTML = `<span class="sq-option-letter">${String.fromCharCode(65 + i)}</span>${opt}`;
+    btn.addEventListener('click', () => selectStudyAnswer(i, q));
+    container.appendChild(btn);
+  });
+}
+
+function selectStudyAnswer(chosen, q) {
+  document.querySelectorAll('.sq-option').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === chosen) btn.classList.add('wrong');
+  });
+
+  const correct = chosen === q.correct;
+  if (correct) {
+    sqScore++;
+  } else {
+    sqWrong.push({ q, chosen });
+  }
+
+  document.getElementById('sq-fb-icon').textContent = correct ? '✅' : '❌';
+  document.getElementById('sq-fb-exp').textContent = q.explanation;
+  document.getElementById('sq-feedback').classList.remove('hidden');
+  document.getElementById('sq-next-btn').classList.remove('hidden');
+  document.getElementById('sq-next-btn').textContent =
+    sqIndex === sqQuestions.length - 1 ? 'See Results' : 'Next →';
+}
+
+function advanceStudyQuiz() {
+  sqIndex++;
+  if (sqIndex >= sqQuestions.length) {
+    finishStudyQuiz();
+  } else {
+    renderStudyQuestion();
+  }
+}
+
+function finishStudyQuiz() {
+  const total = sqQuestions.length;
+  const pct = Math.round((sqScore / total) * 100);
+  const passed = pct >= 70;
+
+  // Save progress + version bump
+  const p = getStudyProgress();
+  const wp = p.weeks[studyCurrentWeek];
+  if (wp) {
+    wp.attempts.push({ date: new Date().toISOString().slice(0,10), score: pct });
+    if (wp.bestScore === null || pct > wp.bestScore) wp.bestScore = pct;
+    // Unlock next week if passed
+    if (passed && p.weeks[studyCurrentWeek + 1]) {
+      p.weeks[studyCurrentWeek + 1].unlocked = true;
+    }
+  }
+
+  // Flag weaknesses
+  sqWrong.forEach(({ q }) => {
+    const pattern = q.q.substring(0, 30);
+    const existing = p.weaknesses.find(w => w.pattern === pattern);
+    if (!existing) {
+      p.weaknesses.push({
+        pattern,
+        fullQ: q.q,
+        firstFlagged: p.version,
+        explanation: q.explanation,
+        status: 'active'
+      });
+    }
+  });
+
+  bumpStudyVersion(p);
+  saveStudyProgress(p);
+
+  // Show result UI
+  document.getElementById('study-quiz-active').classList.add('hidden');
+  document.getElementById('study-quiz-result').classList.remove('hidden');
+  document.getElementById('sq-result-score').textContent = `${sqScore}/${total} (${pct}%)`;
+  const label = document.getElementById('sq-result-label');
+  label.textContent = passed ? 'PASSED ✓' : 'FAILED ✗';
+  label.className = 'sq-result-label ' + (passed ? 'passed' : 'failed');
+
+  let msg;
+  if (pct === 100) msg = '完璧！ Perfect score! 🎉';
+  else if (passed) msg = 'よくできました！ Good job! ' + (studyCurrentWeek < LESSONS_DATA.weeks.length ? 'Week ' + (studyCurrentWeek + 1) + ' unlocked.' : '');
+  else msg = 'もう一度やってみよう！ Need ≥70% to unlock next week.';
+  document.getElementById('sq-result-msg').textContent = msg;
+
+  // Wrong answers review
+  const wrongList = document.getElementById('sq-wrong-list');
+  wrongList.innerHTML = sqWrong.length === 0
+    ? ''
+    : '<div style="font-size:0.75rem;font-weight:600;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">Review wrong answers</div>' +
+      sqWrong.map(({ q }) => `
+        <div class="sq-wrong-item">
+          <div class="sq-wrong-q">${q.q}</div>
+          <div class="sq-wrong-exp">${q.explanation}</div>
+        </div>
+      `).join('');
+}
+
+function showStudyWeaknesses() {
+  document.getElementById('study-home').classList.add('hidden');
+  document.getElementById('study-weaknesses-detail').classList.remove('hidden');
+
+  const p = getStudyProgress();
+  const list = document.getElementById('study-weaknesses-list');
+  if (p.weaknesses.length === 0) {
+    list.innerHTML = '<div class="sw-empty">No weaknesses yet — complete a quiz to see patterns you need to review.</div>';
+    return;
+  }
+  list.innerHTML = p.weaknesses.map(w => `
+    <div class="sw-item ${w.status === 'resolved' ? 'sw-resolved' : ''}">
+      <div class="sw-pattern">${w.pattern}</div>
+      <div class="sw-meta">Flagged ${w.firstFlagged} · ${w.status}</div>
+      <div class="sw-mistake">${w.explanation}</div>
+    </div>
+  `).join('');
 }

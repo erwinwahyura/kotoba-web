@@ -845,6 +845,85 @@
             </div>
           </div>
         </div>
+
+        <!-- ===== STUDY VIEW ===== -->
+        <div id="study-view" class="view">
+
+          <!-- Home: week cards -->
+          <div id="study-home">
+            <div class="view-header">
+              <span class="view-label">勉強 Study</span>
+              <span class="study-version-badge" id="study-version-badge">v001</span>
+            </div>
+            <div class="study-overall">
+              <div class="study-overall-label">Week <span id="study-current-week-num">1</span> of 6 &nbsp;·&nbsp; <span id="study-overall-pct">0</span>% complete</div>
+              <div class="study-overall-bar"><div class="study-overall-fill" id="study-overall-fill"></div></div>
+            </div>
+            <div class="study-weeks-grid" id="study-weeks-grid"></div>
+            <div class="study-weakness-summary hidden" id="study-weakness-summary">
+              <button class="study-weakness-btn" id="study-weaknesses-open-btn">
+                <span class="study-weakness-icon">⚠️</span>
+                <span id="study-weakness-count-label">0 weaknesses to review</span>
+                <span class="study-weakness-arrow">→</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Week detail -->
+          <div id="study-week-detail" class="hidden">
+            <div class="study-detail-header">
+              <button class="study-back-btn" id="study-back-btn">← Weeks</button>
+              <span class="study-week-title" id="study-week-title">Week 1</span>
+            </div>
+            <div class="study-tabs">
+              <button class="study-tab active" data-stab="article">📖 Learn</button>
+              <button class="study-tab" data-stab="compare">⚖️ Compare</button>
+              <button class="study-tab" data-stab="story">📚 Story</button>
+              <button class="study-tab" data-stab="quiz">✏️ Quiz</button>
+            </div>
+            <div id="study-article-pane" class="study-pane sl-content"></div>
+            <div id="study-compare-pane" class="study-pane sl-content hidden"></div>
+            <div id="study-story-pane" class="study-pane sl-content hidden"></div>
+            <div id="study-quiz-pane" class="study-pane hidden">
+              <!-- Active quiz -->
+              <div id="study-quiz-active">
+                <div class="study-quiz-meta">
+                  <span>Q<span id="sq-num">1</span> / <span id="sq-total">20</span></span>
+                  <span id="sq-score-live">Score: 0</span>
+                </div>
+                <div class="study-quiz-bar"><div class="study-quiz-bar-fill" id="sq-bar-fill"></div></div>
+                <div class="study-quiz-ctx" id="sq-ctx"></div>
+                <div class="study-quiz-q" id="sq-q"></div>
+                <div class="study-quiz-options" id="sq-options"></div>
+                <div class="study-quiz-feedback hidden" id="sq-feedback">
+                  <div class="sq-feedback-icon" id="sq-fb-icon"></div>
+                  <div class="sq-feedback-exp" id="sq-fb-exp"></div>
+                </div>
+                <button class="btn btn-primary hidden" id="sq-next-btn">Next →</button>
+              </div>
+              <!-- Result screen -->
+              <div id="study-quiz-result" class="hidden">
+                <div class="sq-result-score" id="sq-result-score"></div>
+                <div class="sq-result-label" id="sq-result-label"></div>
+                <div class="sq-result-msg" id="sq-result-msg"></div>
+                <div class="sq-wrong-list" id="sq-wrong-list"></div>
+                <button class="btn btn-secondary" id="sq-retry-btn">Try Again</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weaknesses detail -->
+          <div id="study-weaknesses-detail" class="hidden">
+            <div class="study-detail-header">
+              <button class="study-back-btn" id="study-weaknesses-back-btn">← Back</button>
+              <span class="study-week-title">Weaknesses</span>
+            </div>
+            <div id="study-weaknesses-list"></div>
+          </div>
+
+        </div>
+        <!-- ===== END STUDY VIEW ===== -->
+
       </main>
 
       <!-- Mobile Bottom Nav -->
@@ -903,6 +982,10 @@
           <button class="more-item" data-view="progress">
             <span class="more-icon">進</span>
             <span class="more-label">Progress</span>
+          </button>
+          <button class="more-item" data-view="study">
+            <span class="more-icon">勉</span>
+            <span class="more-label">Study</span>
           </button>
           <button class="more-item" id="more-goals-btn">
             <span class="more-icon">🎯</span>
@@ -1045,6 +1128,7 @@
     </div>
   </div>
 
+  <script src="lessons-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
